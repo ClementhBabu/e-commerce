@@ -28,3 +28,7 @@ class CartItemAdd(BaseModel):
 
 class CartItemUpdate(BaseModel):
     quantity: int
+
+
+class ChatRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=1000)
