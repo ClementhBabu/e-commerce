@@ -1,5 +1,5 @@
 .env
 __pycache__/
 *.pyc
-ecommerce.db
+#ecommerce.db
 .venv/

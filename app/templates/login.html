@@ -15,12 +15,12 @@
         <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
             <form id="loginForm" class="space-y-5">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Email or Phone Number</label>
                     <div class="relative">
-                        <i class="fas fa-envelope absolute left-3.5 top-3.5 text-gray-400"></i>
-                        <input type="email" name="email" id="loginEmail" required
+                        <i class="fas fa-user absolute left-3.5 top-3.5 text-gray-400"></i>
+                        <input type="text" name="login" id="loginIdentity" required
                                class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all duration-300"
-                               placeholder="Enter your email">
+                               placeholder="Enter your email or phone number">
                     </div>
                 </div>
 
@@ -73,7 +73,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                email: document.getElementById('loginEmail').value,
+                login: document.getElementById('loginIdentity').value,
                 password: document.getElementById('loginPassword').value
             })
         });

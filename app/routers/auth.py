@@ -25,6 +25,21 @@ def verify_password(password: str, stored: str) -> bool:
     return new_key == key
 
 
+def is_email(value: str) -> bool:
+    return "@" in value
+
+
+def find_user_by_login(conn, login: str):
+    if is_email(login):
+        return conn.execute(
+            "SELECT * FROM users WHERE email = ?", (login,)
+        ).fetchone()
+    else:
+        return conn.execute(
+            "SELECT * FROM users WHERE phone = ?", (login,)
+        ).fetchone()
+
+
 @router.post("/register")
 async def register(user: UserRegister, response: Response):
     conn = get_connection()
@@ -38,11 +53,19 @@ async def register(user: UserRegister, response: Response):
         conn.close()
         raise HTTPException(status_code=400, detail="User with this email or username already exists")
 
+    if user.phone:
+        existing_phone = conn.execute(
+            "SELECT id FROM users WHERE phone = ?", (user.phone,)
+        ).fetchone()
+        if existing_phone:
+            conn.close()
+            raise HTTPException(status_code=400, detail="User with this phone number already exists")
+
     password_hash = hash_password(user.password)
 
     cursor = conn.execute(
-        "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
-        (user.username, user.email, password_hash)
+        "INSERT INTO users (username, email, phone, password_hash) VALUES (?, ?, ?, ?)",
+        (user.username, user.email, user.phone, password_hash)
     )
     user_id = cursor.lastrowid
     conn.commit()
@@ -69,14 +92,11 @@ async def register(user: UserRegister, response: Response):
 @router.post("/login")
 async def login(user: UserLogin, response: Response):
     conn = get_connection()
-    db_user = conn.execute(
-        "SELECT * FROM users WHERE email = ?",
-        (user.email,)
-    ).fetchone()
+    db_user = find_user_by_login(conn, user.login)
     conn.close()
 
     if not db_user or not verify_password(user.password, db_user["password_hash"]):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        raise HTTPException(status_code=401, detail="Invalid login credentials or password")
 
     token_data = {
         "user_id": db_user["id"],
@@ -99,14 +119,11 @@ async def login(user: UserLogin, response: Response):
 @router.post("/forgot-password")
 async def forgot_password(data: ForgotPassword):
     conn = get_connection()
-    db_user = conn.execute(
-        "SELECT id, username FROM users WHERE email = ?",
-        (data.email,)
-    ).fetchone()
+    db_user = find_user_by_login(conn, data.login)
 
     if not db_user:
         conn.close()
-        return {"message": "If that email is registered, a reset token has been generated."}
+        return {"message": "If that email or phone is registered, a reset token has been generated."}
 
     conn.execute(
         "UPDATE password_resets SET used = 1 WHERE user_id = ? AND used = 0",
@@ -123,7 +140,7 @@ async def forgot_password(data: ForgotPassword):
     conn.commit()
     conn.close()
 
-    return {"message": "Reset token generated.", "token": token, "email": data.email}
+    return {"message": "Reset token generated.", "token": token, "login": data.login}
 
 
 @router.post("/reset-password")

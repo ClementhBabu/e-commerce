@@ -1,19 +1,21 @@
 from pydantic import BaseModel, Field
+from typing import Optional
 
 
 class UserRegister(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: str = Field(..., max_length=100)
+    phone: Optional[str] = Field(default=None, max_length=20)
     password: str = Field(..., min_length=6, max_length=100)
 
 
 class UserLogin(BaseModel):
-    email: str
+    login: str = Field(..., max_length=100)
     password: str
 
 
 class ForgotPassword(BaseModel):
-    email: str = Field(..., max_length=100)
+    login: str = Field(..., max_length=100)
 
 
 class ResetPassword(BaseModel):
