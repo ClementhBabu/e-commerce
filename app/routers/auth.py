@@ -28,10 +28,11 @@ def verify_password(password: str, stored: str) -> bool:
 @router.post("/register")
 async def register(user: UserRegister, response: Response):
     conn = get_connection()
+    email = user.email.strip().lower()
 
     existing = conn.execute(
-        "SELECT id FROM users WHERE email = ? OR username = ?",
-        (user.email, user.username)
+        "SELECT id FROM users WHERE LOWER(email) = ? OR username = ?",
+        (email, user.username)
     ).fetchone()
 
     if existing:
@@ -42,7 +43,7 @@ async def register(user: UserRegister, response: Response):
 
     cursor = conn.execute(
         "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
-        (user.username, user.email, password_hash)
+        (user.username, email, password_hash)
     )
     user_id = cursor.lastrowid
     conn.commit()
@@ -68,10 +69,11 @@ async def register(user: UserRegister, response: Response):
 
 @router.post("/login")
 async def login(user: UserLogin, response: Response):
+    email = user.email.strip().lower()
     conn = get_connection()
     db_user = conn.execute(
-        "SELECT * FROM users WHERE email = ?",
-        (user.email,)
+        "SELECT * FROM users WHERE LOWER(email) = ?",
+        (email,)
     ).fetchone()
     conn.close()
 
@@ -98,10 +100,11 @@ async def login(user: UserLogin, response: Response):
 
 @router.post("/forgot-password")
 async def forgot_password(data: ForgotPassword):
+    email = data.email.strip().lower()
     conn = get_connection()
     db_user = conn.execute(
-        "SELECT id, username FROM users WHERE email = ?",
-        (data.email,)
+        "SELECT id, username FROM users WHERE LOWER(email) = ?",
+        (email,)
     ).fetchone()
 
     if not db_user:
