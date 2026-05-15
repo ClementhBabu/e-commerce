@@ -28,7 +28,9 @@ async def startup():
 async def auth_middleware(request: Request, call_next):
     public_paths = [
         "/login", "/register", "/static",
-        "/api/auth/login", "/api/auth/register"
+        "/forgot-password", "/reset-password",
+        "/api/auth/login", "/api/auth/register",
+        "/api/auth/forgot-password", "/api/auth/reset-password"
     ]
 
     is_public = any(request.url.path.startswith(p) for p in public_paths)
@@ -162,6 +164,16 @@ async def checkout_page(request: Request):
         "total": total,
         "user": {"username": request.state.username}
     })
+
+
+@app.get("/forgot-password")
+async def forgot_password_page(request: Request):
+    return templates.TemplateResponse("forgot_password.html", {"request": request})
+
+
+@app.get("/reset-password")
+async def reset_password_page(request: Request):
+    return templates.TemplateResponse("reset_password.html", {"request": request})
 
 
 @app.get("/logout")

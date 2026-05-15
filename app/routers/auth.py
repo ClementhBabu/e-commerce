@@ -1,10 +1,11 @@
 import hashlib
 import os
+import secrets
 from fastapi import APIRouter, HTTPException, Response
 from jose import jwt
 from datetime import datetime, timedelta
 from app.database import get_connection
-from app.schemas import UserRegister, UserLogin
+from app.schemas import UserRegister, UserLogin, ForgotPassword, ResetPassword
 from app.dependencies import SECRET_KEY, ALGORITHM
 
 router = APIRouter()
@@ -93,3 +94,61 @@ async def login(user: UserLogin, response: Response):
     )
 
     return {"message": "Login successful", "redirect": "/"}
+
+
+@router.post("/forgot-password")
+async def forgot_password(data: ForgotPassword):
+    conn = get_connection()
+    db_user = conn.execute(
+        "SELECT id, username FROM users WHERE email = ?",
+        (data.email,)
+    ).fetchone()
+
+    if not db_user:
+        conn.close()
+        return {"message": "If that email is registered, a reset token has been generated."}
+
+    conn.execute(
+        "UPDATE password_resets SET used = 1 WHERE user_id = ? AND used = 0",
+        (db_user["id"],)
+    )
+
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.utcnow() + timedelta(hours=1)
+
+    conn.execute(
+        "INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)",
+        (db_user["id"], token, expires_at)
+    )
+    conn.commit()
+    conn.close()
+
+    return {"message": "Reset token generated.", "token": token, "email": data.email}
+
+
+@router.post("/reset-password")
+async def reset_password(data: ResetPassword):
+    conn = get_connection()
+    reset = conn.execute(
+        "SELECT * FROM password_resets WHERE token = ? AND used = 0 AND expires_at > ?",
+        (data.token, datetime.utcnow())
+    ).fetchone()
+
+    if not reset:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token.")
+
+    password_hash = hash_password(data.password)
+
+    conn.execute(
+        "UPDATE users SET password_hash = ? WHERE id = ?",
+        (password_hash, reset["user_id"])
+    )
+    conn.execute(
+        "UPDATE password_resets SET used = 1 WHERE id = ?",
+        (reset["id"],)
+    )
+    conn.commit()
+    conn.close()
+
+    return {"message": "Password has been reset successfully."}

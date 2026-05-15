@@ -39,6 +39,17 @@ def init_db():
     """)
 
     cursor.execute("""
+        CREATE TABLE IF NOT EXISTS password_resets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            used INTEGER DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    """)
+
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS cart_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -55,40 +66,40 @@ def init_db():
         products = [
             ("Wireless Bluetooth Headphones",
              "Premium noise-cancelling wireless headphones with 30-hour battery life. Features deep bass, comfortable ear cushions, and built-in microphone for crystal clear calls.",
-             79.99, "https://picsum.photos/seed/headphones/400/400", "Electronics", 4.5),
+             79.99, "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=600&fit=crop", "Electronics", 4.5),
             ("Smart Watch Pro",
              "Advanced smartwatch with heart rate monitoring, GPS tracking, sleep analysis, and 7-day battery life. Water resistant up to 50 meters.",
-             199.99, "https://picsum.photos/seed/smartwatch/400/400", "Electronics", 4.3),
+             199.99, "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&h=600&fit=crop", "Electronics", 4.3),
             ("Running Shoes Ultra",
              "Lightweight running shoes with responsive cushioning and breathable mesh upper. Perfect for daily training and long distance runs.",
-             129.99, "https://picsum.photos/seed/shoes/400/400", "Fashion", 4.7),
+             129.99, "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&h=600&fit=crop", "Fashion", 4.7),
             ("Organic Green Tea Collection",
              "Premium organic green tea set with 5 distinct flavors. Rich in antioxidants and naturally sourced from sustainable farms.",
-             24.99, "https://picsum.photos/seed/tea/400/400", "Food & Beverages", 4.2),
+             24.99, "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=600&h=600&fit=crop", "Food & Beverages", 4.2),
             ("Laptop Backpack Pro",
              "Durable water-resistant backpack with padded laptop compartment, USB charging port, and anti-theft design. Fits up to 15.6 inch laptops.",
-             49.99, "https://picsum.photos/seed/backpack/400/400", "Accessories", 4.6),
+             49.99, "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop", "Accessories", 4.6),
             ("Wireless Charging Pad",
              "Fast wireless charger compatible with all Qi-enabled devices. Slim design with LED indicator and foreign object detection.",
-             29.99, "https://picsum.photos/seed/charger/400/400", "Electronics", 4.1),
+             29.99, "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=600&h=600&fit=crop", "Electronics", 4.1),
             ("Stainless Steel Water Bottle",
              "Double-wall vacuum insulated water bottle. Keeps drinks cold for 24 hours or hot for 12 hours. BPA-free and eco-friendly.",
-             19.99, "https://picsum.photos/seed/bottle/400/400", "Home & Kitchen", 4.4),
+             19.99, "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&h=600&fit=crop", "Home & Kitchen", 4.4),
             ("Premium Yoga Mat",
              "Extra thick 6mm yoga mat with non-slip surface. Includes carrying strap. Perfect for yoga, pilates, and stretching exercises.",
-             34.99, "https://picsum.photos/seed/yogamat/400/400", "Sports", 4.8),
+             34.99, "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=600&h=600&fit=crop", "Sports", 4.8),
             ("Mechanical Keyboard RGB",
              "Full-size mechanical keyboard with custom blue switches and per-key RGB backlighting. Aircraft-grade aluminum frame.",
-             89.99, "https://picsum.photos/seed/keyboard/400/400", "Electronics", 4.5),
+             89.99, "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&h=600&fit=crop", "Electronics", 4.5),
             ("Polarized Sunglasses",
              "Classic aviator sunglasses with polarized lenses. UV400 protection, lightweight metal frame, and scratch-resistant coating.",
-             39.99, "https://picsum.photos/seed/sunglasses/400/400", "Fashion", 4.3),
+             39.99, "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=600&h=600&fit=crop", "Fashion", 4.3),
             ("Portable Bluetooth Speaker",
              "Compact wireless speaker with 360 surround sound, 12-hour battery, and IPX7 waterproof rating. Perfect for outdoor adventures.",
-             59.99, "https://picsum.photos/seed/speaker/400/400", "Electronics", 4.6),
+             59.99, "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=600&h=600&fit=crop", "Electronics", 4.6),
             ("Genuine Leather Wallet",
              "Genuine leather bifold wallet with RFID blocking technology. Slim design with multiple card slots and ID window.",
-             27.99, "https://picsum.photos/seed/wallet/400/400", "Accessories", 4.4),
+             27.99, "https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&h=600&fit=crop", "Accessories", 4.4),
         ]
         cursor.executemany(
             "INSERT INTO products (name, description, price, image_url, category, rating) VALUES (?, ?, ?, ?, ?, ?)",
