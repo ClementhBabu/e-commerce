@@ -1,10 +1,13 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, JSONResponse
 from app.database import init_db, get_connection
 from app.dependencies import SECRET_KEY, ALGORITHM
-from app.routers import auth, products, cart, checkout
+from app.routers import auth, products, cart, checkout, chat
 from jose import jwt, JWTError
 
 app = FastAPI(title="ShopHub - E-Commerce Store")
@@ -17,6 +20,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(products.router, prefix="/api", tags=["products"])
 app.include_router(cart.router, prefix="/api/cart", tags=["cart"])
 app.include_router(checkout.router, prefix="/api/checkout", tags=["checkout"])
+app.include_router(chat.router, prefix="/api", tags=["chat"])
 
 
 @app.on_event("startup")
