@@ -1,23 +1,26 @@
 # ShopHub - Full-Stack E-Commerce Application
 
-A modern, responsive full-stack e-commerce web application built with **Python**, **FastAPI**, and **SQLite3**. Features user authentication, product browsing, shopping cart, and dummy payment checkout with a polished UI inspired by Amazon/Flipkart.
+A modern, responsive full-stack e-commerce web application built with **Python**, **FastAPI**, and **SQLite3**. Features user authentication (email + phone), product browsing, AI-powered chatbot, shopping cart, and dummy payment checkout with a polished, modern UI.
 
 ## Features
 
-- **User Authentication** - Secure registration and login with bcrypt password hashing and JWT token-based sessions
-- **Protected Routes** - Unauthenticated users are redirected to the login page
-- **Product Browsing** - Browse products with category filtering and search functionality
-- **Product Details** - View detailed product information including image, description, price, and ratings
-- **Shopping Cart** - Add/remove items, update quantities, and view total price
-- **Checkout** - Dummy payment system with simulated success/failure (90% success rate)
-- **Responsive Design** - Mobile-first UI built with Tailwind CSS
-- **Modern UI/UX** - Smooth animations, hover effects, toast notifications, and loading states
+- **User Authentication** — Register and login with email or phone number. PBKDF2 password hashing with JWT token-based sessions
+- **Password Reset** — Forgot password flow with secure reset tokens
+- **AI Chatbot (ShopBot)** — DeepSeek-powered assistant that answers store-related questions only, available on every page
+- **Protected Routes** — Middleware redirects unauthenticated users to login
+- **Product Browsing** — 36 products across 9 categories with search and filter
+- **Product Details** — Star ratings, stock urgency badges, delivery & returns info
+- **Shopping Cart** — Add/remove items, update quantities, order summary
+- **Checkout** — Dummy payment with card formatting and 90% success rate
+- **Responsive Design** — Mobile-first UI built with Tailwind CSS
+- **Modern UI/UX** — Animated hero, glassmorphism navbar, hover effects, toast notifications, staggered card animations
 
 ## Tech Stack
 
 - **Backend**: Python 3.8+, FastAPI, SQLite3
-- **Frontend**: HTML5, CSS3, JavaScript, Tailwind CSS (CDN), Font Awesome
-- **Authentication**: JWT (python-jose), bcrypt (passlib)
+- **Frontend**: HTML5, CSS3, JavaScript, Tailwind CSS (CDN), Font Awesome 6
+- **Authentication**: JWT (python-jose), PBKDF2 password hashing
+- **AI**: OpenAI-compatible API (DeepSeek default)
 - **Template Engine**: Jinja2
 
 ## Project Structure
@@ -26,31 +29,36 @@ A modern, responsive full-stack e-commerce web application built with **Python**
 e-commerce/
 ├── app/
 │   ├── __init__.py
-│   ├── main.py              # FastAPI app entry, page routes, middleware
-│   ├── database.py          # SQLite3 connection and table initialization
-│   ├── dependencies.py      # Auth dependency utilities
+│   ├── main.py              # FastAPI entry point, page routes, middleware, dotenv
+│   ├── database.py          # SQLite3 connection, schema, seed data (36 products)
+│   ├── dependencies.py      # JWT auth helpers
 │   ├── schemas.py           # Pydantic request/response models
 │   ├── routers/
 │   │   ├── __init__.py
-│   │   ├── auth.py          # Registration and login APIs
+│   │   ├── auth.py          # Register, login, forgot/reset password
 │   │   ├── products.py      # Product listing and detail APIs
 │   │   ├── cart.py          # Cart CRUD APIs
-│   │   └── checkout.py      # Payment processing API
+│   │   ├── checkout.py      # Dummy payment processing
+│   │   └── chat.py          # AI chatbot endpoint (DeepSeek)
 │   └── templates/
-│       ├── base.html        # Base layout with navbar and footer
-│       ├── index.html       # Home page with hero banner and product grid
-│       ├── login.html       # User login page
-│       ├── register.html    # User registration page
-│       ├── product_detail.html  # Individual product page
-│       ├── cart.html        # Shopping cart page
-│       └── checkout.html    # Checkout and payment page
+│       ├── base.html        # Base layout (navbar, footer, chat widget)
+│       ├── index.html       # Home page (hero, categories, product grid, newsletter)
+│       ├── login.html       # Login (email or phone)
+│       ├── register.html    # Registration (username, email, phone, password)
+│       ├── forgot_password.html
+│       ├── reset_password.html
+│       ├── product_detail.html
+│       ├── cart.html
+│       └── checkout.html
 ├── static/
 │   ├── css/
-│   │   └── style.css        # Custom styles and animations
+│   │   └── style.css        # Custom styles, animations, chat widget
 │   └── js/
-│       └── script.js        # Shared JavaScript utilities
-├── run.py                   # Application entry point
-├── requirements.txt         # Python dependencies
+│       └── script.js        # Shared utilities, cart, chat widget
+├── .env                     # DEEPSEEK_API_KEY (gitignored)
+├── .gitignore
+├── run.py                   # Application entry point (uvicorn)
+├── requirements.txt
 └── README.md
 ```
 
@@ -59,32 +67,31 @@ e-commerce/
 ### Prerequisites
 
 - Python 3.8 or higher
-- pip (Python package manager)
+- DeepSeek API key (for the AI chatbot)
 
 ### Installation
 
-1. **Clone or navigate to the project directory:**
+1. **Navigate to the project directory:**
 
 ```bash
 cd e-commerce
 ```
 
-2. **Create a virtual environment (recommended):**
+2. **Create a virtual environment:**
 
 ```bash
-python -m venv venv
+python -m venv .venv
 ```
 
 3. **Activate the virtual environment:**
 
 - Windows:
 ```bash
-venv\Scripts\activate
+.venv\Scripts\activate
 ```
-
 - Linux/Mac:
 ```bash
-source venv/bin/activate
+source .venv/bin/activate
 ```
 
 4. **Install dependencies:**
@@ -93,13 +100,19 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-5. **Run the application:**
+5. **Set your API key** by editing the `.env` file:
+
+```
+DEEPSEEK_API_KEY=your-deepseek-api-key
+```
+
+6. **Run the application:**
 
 ```bash
 python run.py
 ```
 
-6. **Open your browser and visit:**
+7. **Open your browser:**
 
 ```
 http://127.0.0.1:8000
@@ -107,57 +120,72 @@ http://127.0.0.1:8000
 
 ## Usage
 
-1. **Register** a new account (any email and password with min 6 characters)
-2. **Login** with your credentials
-3. **Browse products** on the home page - filter by category or search by name
-4. **Click a product** to view its details
-5. **Add products** to your cart using the "+" button
-6. **View your cart** by clicking the cart icon in the navigation bar
-7. **Proceed to checkout** from the cart page
-8. **Enter dummy payment details** (any 16-digit card number) and place your order
-9. Payment has a **90% success rate** - try again if it fails
+1. **Register** a new account — provide username, email, optional phone number, and password
+2. **Login** using your email or phone number
+3. **Browse products** — filter by category, search by name
+4. **Click a product** to view details, ratings, and add to cart
+5. **View your cart** via the cart icon in the navbar
+6. **Proceed to checkout** and enter dummy card details
+7. **Chat with ShopBot** — click the robot icon (bottom-right) to ask about products, orders, or store features
 
 ## API Endpoints
 
 ### Authentication
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/auth/register` | Register a new user |
-| POST | `/api/auth/login` | Login and receive JWT cookie |
+| POST | `/api/auth/register` | Register user (username, email, phone?, password) |
+| POST | `/api/auth/login` | Login with email or phone + password |
+| POST | `/api/auth/forgot-password` | Request password reset token |
+| POST | `/api/auth/reset-password` | Reset password with token |
 
 ### Products
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/products` | List all products (optional: `?category=` and `?search=`) |
+| GET | `/api/products` | List products (?category=&search=) |
 | GET | `/api/products/{id}` | Get product details |
 
 ### Cart
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/cart` | Get current user's cart |
+| GET | `/api/cart` | Get user's cart |
 | POST | `/api/cart/add` | Add item to cart |
-| PUT | `/api/cart/update/{id}` | Update cart item quantity |
+| PUT | `/api/cart/update/{id}` | Update item quantity |
 | DELETE | `/api/cart/remove/{id}` | Remove item from cart |
 
 ### Checkout
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/checkout` | Process payment (dummy) |
+| POST | `/api/checkout` | Process dummy payment |
+
+### Chat
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/chat` | Send message to ShopBot AI |
 
 ## Database
 
-The application uses SQLite3 with the following tables:
+SQLite3 with auto-migration. Tables:
 
-- **users** - User accounts with hashed passwords
-- **products** - Product catalog (pre-seeded with 12 dummy products)
-- **cart_items** - Shopping cart items linked to users and products
+- **users** — id, username, email, phone, password_hash
+- **products** — 36 pre-seeded products across 9 categories
+- **cart_items** — user_id, product_id, quantity
+- **password_resets** — user_id, token, expires_at
 
-The database file (`ecommerce.db`) is created automatically on first run.
+## AI Chatbot Configuration
+
+The chatbot uses the OpenAI-compatible API. Defaults to DeepSeek:
+
+| Env Variable | Default | Description |
+|---|---|---|
+| `DEEPSEEK_API_KEY` | — | Your API key |
+| `OPENAI_API_BASE` | `https://api.deepseek.com/v1` | API base URL |
+| `OPENAI_MODEL` | `deepseek-chat` | Model name |
+
+The assistant is restricted to ShopHub-related questions only — it will decline anything unrelated.
 
 ## Notes
 
-- This is a **demo project** for educational purposes
-- No real payment processing - the checkout simulates success/failure randomly
-- Product images are sourced from picsum.photos (random placeholder images)
-- JWT tokens are stored in HTTP-only cookies for security
-- Password hashing uses bcrypt via passlib
+- This is a **demo project** — no real payment processing
+- Product images from Unsplash
+- JWT tokens stored in HTTP-only cookies
+- Password hashing uses PBKDF2 with SHA-256
