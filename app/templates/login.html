@@ -69,12 +69,12 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     btn.disabled = true;
 
     try {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+
         const res = await fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value;
-
             body: JSON.stringify({ email, password })
         });
 
