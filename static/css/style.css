@@ -24,24 +24,6 @@ body {
     overflow: hidden;
 }
 
-.product-card {
-    animation: fadeInUp 0.5s ease forwards;
-    opacity: 0;
-}
-
-.product-card:nth-child(1) { animation-delay: 0.05s; }
-.product-card:nth-child(2) { animation-delay: 0.1s; }
-.product-card:nth-child(3) { animation-delay: 0.15s; }
-.product-card:nth-child(4) { animation-delay: 0.2s; }
-.product-card:nth-child(5) { animation-delay: 0.25s; }
-.product-card:nth-child(6) { animation-delay: 0.3s; }
-.product-card:nth-child(7) { animation-delay: 0.35s; }
-.product-card:nth-child(8) { animation-delay: 0.4s; }
-.product-card:nth-child(9) { animation-delay: 0.45s; }
-.product-card:nth-child(10) { animation-delay: 0.5s; }
-.product-card:nth-child(11) { animation-delay: 0.55s; }
-.product-card:nth-child(12) { animation-delay: 0.6s; }
-
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -112,10 +94,6 @@ input[type="number"] {
     -moz-appearance: textfield;
 }
 
-.product-card:hover img {
-    transform: scale(1.1);
-}
-
 .fa-star {
     font-size: inherit;
 }
@@ -125,6 +103,67 @@ input[type="number"] {
         animation-delay: 0.05s !important;
     }
 }
+
+.product-card {
+    animation: fadeInUp 0.5s ease forwards;
+    opacity: 0;
+}
+
+.product-card:nth-child(1) { animation-delay: 0.03s; }
+.product-card:nth-child(2) { animation-delay: 0.06s; }
+.product-card:nth-child(3) { animation-delay: 0.09s; }
+.product-card:nth-child(4) { animation-delay: 0.12s; }
+.product-card:nth-child(5) { animation-delay: 0.15s; }
+.product-card:nth-child(6) { animation-delay: 0.18s; }
+.product-card:nth-child(7) { animation-delay: 0.21s; }
+.product-card:nth-child(8) { animation-delay: 0.24s; }
+.product-card:nth-child(9) { animation-delay: 0.27s; }
+.product-card:nth-child(10) { animation-delay: 0.30s; }
+.product-card:nth-child(11) { animation-delay: 0.33s; }
+.product-card:nth-child(12) { animation-delay: 0.36s; }
+.product-card:nth-child(13) { animation-delay: 0.39s; }
+.product-card:nth-child(14) { animation-delay: 0.42s; }
+.product-card:nth-child(15) { animation-delay: 0.45s; }
+.product-card:nth-child(16) { animation-delay: 0.48s; }
+.product-card:nth-child(17) { animation-delay: 0.51s; }
+.product-card:nth-child(18) { animation-delay: 0.54s; }
+.product-card:nth-child(19) { animation-delay: 0.57s; }
+.product-card:nth-child(20) { animation-delay: 0.60s; }
+.product-card:nth-child(21) { animation-delay: 0.63s; }
+.product-card:nth-child(22) { animation-delay: 0.66s; }
+.product-card:nth-child(23) { animation-delay: 0.69s; }
+.product-card:nth-child(24) { animation-delay: 0.72s; }
+.product-card:nth-child(25) { animation-delay: 0.75s; }
+.product-card:nth-child(26) { animation-delay: 0.78s; }
+.product-card:nth-child(27) { animation-delay: 0.81s; }
+.product-card:nth-child(28) { animation-delay: 0.84s; }
+.product-card:nth-child(29) { animation-delay: 0.87s; }
+.product-card:nth-child(30) { animation-delay: 0.90s; }
+.product-card:nth-child(31) { animation-delay: 0.93s; }
+.product-card:nth-child(32) { animation-delay: 0.96s; }
+.product-card:nth-child(33) { animation-delay: 0.99s; }
+.product-card:nth-child(34) { animation-delay: 1.02s; }
+.product-card:nth-child(35) { animation-delay: 1.05s; }
+.product-card:nth-child(36) { animation-delay: 1.08s; }
+
+.product-card:hover {
+    box-shadow: 0 25px 50px -12px rgba(79, 70, 229, 0.15);
+}
+
+.category-card {
+    animation: fadeInUp 0.4s ease forwards;
+    opacity: 0;
+}
+
+.category-card:nth-child(1) { animation-delay: 0.05s; }
+.category-card:nth-child(2) { animation-delay: 0.1s; }
+.category-card:nth-child(3) { animation-delay: 0.15s; }
+.category-card:nth-child(4) { animation-delay: 0.2s; }
+.category-card:nth-child(5) { animation-delay: 0.25s; }
+.category-card:nth-child(6) { animation-delay: 0.3s; }
+.category-card:nth-child(7) { animation-delay: 0.35s; }
+.category-card:nth-child(8) { animation-delay: 0.4s; }
+.category-card:nth-child(9) { animation-delay: 0.45s; }
 
 .bg-clip-text {
     -webkit-background-clip: text;
@@ -137,10 +176,6 @@ input[type="number"] {
 
 .group:hover .group-hover\:visible {
     visibility: visible;
-}
-
-.delay-300 {
-    animation-delay: 0.3s;
 }
 
 #chatPanel {
