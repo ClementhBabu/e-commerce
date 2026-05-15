@@ -12,6 +12,15 @@ class UserLogin(BaseModel):
     password: str
 
 
+class ForgotPassword(BaseModel):
+    email: str = Field(..., max_length=100)
+
+
+class ResetPassword(BaseModel):
+    token: str
+    password: str = Field(..., min_length=6, max_length=100)
+
+
 class CartItemAdd(BaseModel):
     product_id: int
     quantity: int = 1
