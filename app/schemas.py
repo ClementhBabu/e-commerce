@@ -34,3 +34,23 @@ class CartItemUpdate(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=1000)
+
+
+class AddressCreate(BaseModel):
+    full_name: str = Field(..., min_length=1, max_length=100)
+    phone: str = Field(..., min_length=10, max_length=20)
+    street_address: str = Field(..., min_length=1, max_length=255)
+    city: str = Field(..., min_length=1, max_length=100)
+    state: str = Field(..., min_length=1, max_length=100)
+    pincode: str = Field(..., min_length=4, max_length=20)
+    is_default: bool = False
+
+
+class AddressUpdate(BaseModel):
+    full_name: str = Field(default=None, min_length=1, max_length=100)
+    phone: str = Field(default=None, min_length=10, max_length=20)
+    street_address: str = Field(default=None, min_length=1, max_length=255)
+    city: str = Field(default=None, min_length=1, max_length=100)
+    state: str = Field(default=None, min_length=1, max_length=100)
+    pincode: str = Field(default=None, min_length=4, max_length=20)
+    is_default: bool = False

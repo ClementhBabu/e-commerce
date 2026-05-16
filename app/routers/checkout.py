@@ -25,6 +25,24 @@ async def process_checkout(request: Request):
     payment_success = random.random() < 0.9
 
     if payment_success:
+        address = conn.execute(
+            "SELECT id FROM addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC LIMIT 1",
+            (request.state.user_id,)
+        ).fetchone()
+        address_id = address["id"] if address else None
+
+        cursor = conn.execute(
+            "INSERT INTO orders (user_id, address_id, total) VALUES (?, ?, ?)",
+            (request.state.user_id, address_id, total)
+        )
+        order_id = cursor.lastrowid
+
+        for item in items:
+            conn.execute(
+                "INSERT INTO order_items (order_id, product_id, product_name, price, quantity) VALUES (?, ?, ?, ?, ?)",
+                (order_id, item["product_id"], item["name"], item["price"], item["quantity"])
+            )
+
         conn.execute("DELETE FROM cart_items WHERE user_id = ?", (request.state.user_id,))
         conn.commit()
         conn.close()
