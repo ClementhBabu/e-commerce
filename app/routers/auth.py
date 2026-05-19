@@ -71,22 +71,7 @@ async def register(user: UserRegister, response: Response):
     conn.commit()
     conn.close()
 
-    token_data = {
-        "user_id": user_id,
-        "username": user.username,
-        "exp": datetime.utcnow() + timedelta(days=7)
-    }
-    token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
-
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        max_age=604800,
-        samesite="lax"
-    )
-
-    return {"message": "Registration successful", "redirect": "/"}
+    return {"message": "Registration successful", "redirect": "/login"}
 
 
 @router.post("/login")
