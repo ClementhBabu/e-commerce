@@ -229,3 +229,47 @@ input[type="number"] {
         opacity: 1;
     }
 }
+
+#searchSuggestions::-webkit-scrollbar,
+#searchSuggestionsMobile::-webkit-scrollbar {
+    width: 4px;
+}
+
+#searchSuggestions::-webkit-scrollbar-track,
+#searchSuggestionsMobile::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#searchSuggestions::-webkit-scrollbar-thumb,
+#searchSuggestionsMobile::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 10px;
+}
+
+#searchSuggestions::-webkit-scrollbar-thumb:hover,
+#searchSuggestionsMobile::-webkit-scrollbar-thumb:hover {
+    background: #d1d5db;
+}
+
+@keyframes micPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+.mic-listening {
+    background-color: #fef2f2 !important;
+    color: #ef4444 !important;
+    animation: micPulse 1.5s infinite;
+}
+
+.mic-listening:hover {
+    background-color: #fee2e2 !important;
+    color: #ef4444 !important;
+}

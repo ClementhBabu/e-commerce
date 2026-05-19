@@ -190,10 +190,11 @@
 
     <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {% for product in products %}
-        <div class="product-card bg-white rounded-2xl shadow-md hover:shadow-2xl transform hover:-translate-y-1.5 transition-all duration-400 overflow-hidden group cursor-pointer border border-gray-100/80"
-             data-category="{{ product.category }}"
-             data-name="{{ product.name|lower }}"
-             onclick="window.location.href='/product/{{ product.id }}'">
+         <div class="product-card bg-white rounded-2xl shadow-md hover:shadow-2xl transform hover:-translate-y-1.5 transition-all duration-400 overflow-hidden group cursor-pointer border border-gray-100/80"
+              data-category="{{ product.category }}"
+              data-name="{{ product.name|lower }}"
+              data-description="{{ product.description|lower }}"
+              onclick="window.location.href='/product/{{ product.id }}'">
             <div class="relative h-60 bg-gray-50 overflow-hidden">
                 <img src="{{ product.image_url }}" alt="{{ product.name }}"
                      class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
@@ -270,10 +271,21 @@
 {% block extra_scripts %}
 <script>
 let currentCategory = 'all';
+let searchProducts = [];
+let debounceTimer = null;
+
+async function loadSearchProducts() {
+    try {
+        const res = await fetch('/api/products');
+        const data = await res.json();
+        searchProducts = data;
+    } catch (e) {
+        searchProducts = [];
+    }
+}
 
 function filterProducts(category) {
     currentCategory = category;
-
     document.querySelectorAll('.category-btn').forEach(btn => {
         if (btn.dataset.category === category) {
             btn.className = 'category-btn px-6 py-2.5 rounded-full text-sm font-semibold bg-indigo-600 text-white shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all duration-300';
@@ -281,7 +293,6 @@ function filterProducts(category) {
             btn.className = 'category-btn px-6 py-2.5 rounded-full text-sm font-semibold bg-white text-gray-700 border-2 border-gray-200 hover:border-indigo-400 hover:text-indigo-600 hover:shadow-md transition-all duration-300';
         }
     });
-
     const searchTerm = (document.getElementById('searchInput')?.value || '').toLowerCase();
     applyFilters(category, searchTerm);
 }
@@ -289,33 +300,221 @@ function filterProducts(category) {
 function applyFilters(category, searchTerm) {
     const cards = document.querySelectorAll('#productGrid .product-card');
     let visible = 0;
-
     cards.forEach(card => {
         const cardCat = card.dataset.category;
-        const cardName = card.dataset.name;
+        const cardName = card.dataset.name || '';
+        const cardDesc = card.dataset.description || '';
         const matchesCat = category === 'all' || cardCat === category;
-        const matchesSearch = !searchTerm || cardName.includes(searchTerm);
+        const matchesSearch = !searchTerm || cardName.includes(searchTerm) || cardDesc.includes(searchTerm);
         card.style.display = matchesCat && matchesSearch ? '' : 'none';
         if (matchesCat && matchesSearch) visible++;
     });
+    const noResultsEl = document.getElementById('noResults');
+    const productGridEl = document.getElementById('productGrid');
+    const productCountEl = document.getElementById('productCount');
 
-    document.getElementById('productCount').textContent = visible + ' products';
-    document.getElementById('noResults').classList.toggle('hidden', visible > 0);
+    if (visible > 0) {
+        productCountEl.textContent = visible + ' products';
+        noResultsEl.classList.add('hidden');
+        productGridEl.classList.remove('hidden');
+    } else {
+        productCountEl.textContent = '0 products';
+        productGridEl.classList.add('hidden');
+        noResultsEl.classList.remove('hidden');
+        const noResultsMsg = document.querySelector('#noResults h3');
+        const noResultsSub = document.querySelector('#noResults p');
+        if (searchTerm) {
+            if (noResultsMsg) noResultsMsg.textContent = 'No products found for "' + escapeHtml(searchTerm) + '"';
+            if (noResultsSub) noResultsSub.textContent = 'Try adjusting your search or browse different categories';
+        } else {
+            if (noResultsMsg) noResultsMsg.textContent = 'No products found';
+            if (noResultsSub) noResultsSub.textContent = 'Try adjusting your search or filter criteria';
+        }
+    }
+}
+
+function getSuggestions(term) {
+    if (!term || term.length < 1) return [];
+    const t = term.toLowerCase();
+    return searchProducts
+        .filter(p => p.name.toLowerCase().includes(t) || p.description.toLowerCase().includes(t))
+        .slice(0, 8);
+}
+
+function renderSuggestions(suggestions, containerId, term) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (!term || suggestions.length === 0) {
+        container.classList.add('hidden');
+        return;
+    }
+    container.classList.remove('hidden');
+    container.innerHTML = suggestions.map(p => {
+        const price = typeof p.price === 'number' ? p.price.toFixed(2) : p.price;
+        return `
+        <div class="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 cursor-pointer border-b border-gray-50 last:border-b-0 transition-colors"
+             onclick="window.location.href='/product/${p.id}'">
+            <img src="${p.image_url}" alt="${escapeHtml(p.name)}" class="w-10 h-10 rounded-lg object-cover bg-gray-100 flex-shrink-0"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="w-10 h-10 rounded-lg bg-gray-100 flex-shrink-0 items-center justify-center hidden">
+                <i class="fas fa-box text-gray-400"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-800 truncate">${escapeHtml(p.name)}</p>
+                <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-xs text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded-full">${escapeHtml(p.category)}</span>
+                    <span class="text-xs font-semibold text-gray-900">$${price}</span>
+                </div>
+            </div>
+            <i class="fas fa-arrow-up-right text-gray-300 text-xs"></i>
+        </div>`;
+    }).join('');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function closeAllSuggestions() {
+    document.getElementById('searchSuggestions')?.classList.add('hidden');
+    document.getElementById('searchSuggestionsMobile')?.classList.add('hidden');
+}
+
+let recognition = null;
+let isListening = false;
+
+function initSpeechRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return false;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        const searchInput = document.getElementById('searchInput');
+        const searchInputMobile = document.getElementById('searchInputMobile');
+        if (searchInput) searchInput.value = transcript;
+        if (searchInputMobile) searchInputMobile.value = transcript;
+        applyFilters(currentCategory, transcript.toLowerCase());
+        closeAllSuggestions();
+        stopMicAnimation();
+    };
+    recognition.onerror = () => {
+        stopMicAnimation();
+        showToast('Voice search failed. Please try again.', 'error');
+    };
+    recognition.onend = () => {
+        stopMicAnimation();
+    };
+    return true;
+}
+
+function startMicAnimation() {
+    isListening = true;
+    ['micButton', 'micButtonMobile'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.classList.add('mic-listening');
+            btn.querySelector('i').className = 'fas fa-circle text-[8px]';
+        }
+    });
+}
+
+function stopMicAnimation() {
+    isListening = false;
+    ['micButton', 'micButtonMobile'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.classList.remove('mic-listening');
+            btn.querySelector('i').className = 'fas fa-microphone text-sm';
+            const mb = document.getElementById('micButtonMobile');
+            if (mb && id === 'micButtonMobile') mb.querySelector('i').className = 'fas fa-microphone text-xs';
+        }
+    });
+}
+
+function toggleVoiceSearch() {
+    if (isListening) {
+        if (recognition) recognition.abort();
+        stopMicAnimation();
+        return;
+    }
+    if (!recognition && !initSpeechRecognition()) {
+        showToast('Voice search is not supported in your browser.', 'error');
+        return;
+    }
+    try {
+        recognition.start();
+        startMicAnimation();
+    } catch (e) {
+        stopMicAnimation();
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    loadSearchProducts();
     const searchInput = document.getElementById('searchInput');
     const searchInputMobile = document.getElementById('searchInputMobile');
+    const micButton = document.getElementById('micButton');
+    const micButtonMobile = document.getElementById('micButtonMobile');
 
-    const handleSearch = (e) => {
+    function handleSearch(e) {
+        const term = e.target.value;
+        const lowerTerm = term.toLowerCase();
+        if (searchInput && searchInput !== e.target) searchInput.value = term;
+        if (searchInputMobile && searchInputMobile !== e.target) searchInputMobile.value = term;
+        applyFilters(currentCategory, lowerTerm);
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const suggestions = getSuggestions(lowerTerm);
+            const activeInputId = e.target.id;
+            const suggestionsId = activeInputId === 'searchInputMobile' ? 'searchSuggestionsMobile' : 'searchSuggestions';
+            const otherSuggestionsId = activeInputId === 'searchInputMobile' ? 'searchSuggestions' : 'searchSuggestionsMobile';
+            document.getElementById(otherSuggestionsId)?.classList.add('hidden');
+            renderSuggestions(suggestions, suggestionsId, lowerTerm);
+        }, 200);
+    }
+
+    function handleSearchKeydown(e) {
+        if (e.key === 'Escape') {
+            closeAllSuggestions();
+            e.target.blur();
+        }
+    }
+
+    function handleSearchFocus(e) {
         const term = e.target.value.toLowerCase();
-        if (searchInput && searchInput !== e.target) searchInput.value = e.target.value;
-        if (searchInputMobile && searchInputMobile !== e.target) searchInputMobile.value = e.target.value;
-        applyFilters(currentCategory, term);
-    };
+        if (term) {
+            const suggestions = getSuggestions(term);
+            const activeInputId = e.target.id;
+            const suggestionsId = activeInputId === 'searchInputMobile' ? 'searchSuggestionsMobile' : 'searchSuggestions';
+            const otherSuggestionsId = activeInputId === 'searchInputMobile' ? 'searchSuggestions' : 'searchSuggestionsMobile';
+            document.getElementById(otherSuggestionsId)?.classList.add('hidden');
+            renderSuggestions(suggestions, suggestionsId, term);
+        }
+    }
 
-    if (searchInput) searchInput.addEventListener('input', handleSearch);
-    if (searchInputMobile) searchInputMobile.addEventListener('input', handleSearch);
+    if (searchInput) {
+        searchInput.addEventListener('input', handleSearch);
+        searchInput.addEventListener('keydown', handleSearchKeydown);
+        searchInput.addEventListener('focus', handleSearchFocus);
+    }
+    if (searchInputMobile) {
+        searchInputMobile.addEventListener('input', handleSearch);
+        searchInputMobile.addEventListener('keydown', handleSearchKeydown);
+        searchInputMobile.addEventListener('focus', handleSearchFocus);
+    }
+    if (micButton) micButton.addEventListener('click', toggleVoiceSearch);
+    if (micButtonMobile) micButtonMobile.addEventListener('click', toggleVoiceSearch);
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#searchContainer') && !e.target.closest('#searchContainerMobile')) {
+            closeAllSuggestions();
+        }
+    });
 });
 </script>
 {% endblock %}
