@@ -27,10 +27,10 @@ export default function App() {
               <Navbar />
               <main className="flex-1">
                 <Routes>
-                  <Route path="/" element={<Home />} />
+                  <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
-                  <Route path="/product/:id" element={<ProductDetail />} />
+                  <Route path="/product/:id" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
                   <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
                   <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
                   <Route path="/address" element={<ProtectedRoute><Address /></ProtectedRoute>} />
