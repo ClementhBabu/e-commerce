@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 #ecommerce.db
 .venv/
+.npm-cache/
