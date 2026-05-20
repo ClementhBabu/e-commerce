@@ -1,7 +1,7 @@
 import hashlib
 import os
 import secrets
-from fastapi import APIRouter, HTTPException, Response, Request, Depends
+from fastapi import APIRouter, HTTPException, Response, Request
 from jose import jwt
 from datetime import datetime, timedelta
 from app.database import get_connection
@@ -30,24 +30,27 @@ def is_email(value: str) -> bool:
 
 
 def find_user_by_login(conn, login: str):
+    cur = conn.cursor()
     if is_email(login):
-        return conn.execute(
-            "SELECT * FROM users WHERE email = ?", (login,)
-        ).fetchone()
+        cur.execute("SELECT * FROM users WHERE email = %s", (login,))
+        return cur.fetchone()
     else:
-        return conn.execute(
-            "SELECT * FROM users WHERE phone = ?", (login,)
-        ).fetchone()
+        cur.execute("SELECT * FROM users WHERE phone = %s", (login,))
+        return cur.fetchone()
 
 
 @router.get("/me")
 async def me(request: Request):
     conn = get_connection()
-    user = conn.execute(
-        "SELECT id, username, email, phone FROM users WHERE id = ?",
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT id, username, email, phone FROM users WHERE id = %s",
         (request.state.user_id,)
-    ).fetchone()
+    )
+    user = cur.fetchone()
     conn.close()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     return {
         "user_id": user["id"],
         "username": user["username"],
@@ -57,33 +60,34 @@ async def me(request: Request):
 
 
 @router.post("/register")
-async def register(user: UserRegister, response: Response):
+async def register(user: UserRegister):
     conn = get_connection()
+    cur = conn.cursor()
 
-    existing = conn.execute(
-        "SELECT id FROM users WHERE email = ? OR username = ?",
+    cur.execute(
+        "SELECT id FROM users WHERE email = %s OR username = %s",
         (user.email, user.username)
-    ).fetchone()
+    )
+    existing = cur.fetchone()
 
     if existing:
         conn.close()
         raise HTTPException(status_code=400, detail="User with this email or username already exists")
 
     if user.phone:
-        existing_phone = conn.execute(
-            "SELECT id FROM users WHERE phone = ?", (user.phone,)
-        ).fetchone()
-        if existing_phone:
+        cur.execute(
+            "SELECT id FROM users WHERE phone = %s", (user.phone,)
+        )
+        if cur.fetchone():
             conn.close()
             raise HTTPException(status_code=400, detail="User with this phone number already exists")
 
     password_hash = hash_password(user.password)
 
-    cursor = conn.execute(
-        "INSERT INTO users (username, email, phone, password_hash) VALUES (?, ?, ?, ?)",
+    cur.execute(
+        "INSERT INTO users (username, email, phone, password_hash) VALUES (%s, %s, %s, %s)",
         (user.username, user.email, user.phone, password_hash)
     )
-    user_id = cursor.lastrowid
     conn.commit()
     conn.close()
 
@@ -132,16 +136,17 @@ async def forgot_password(data: ForgotPassword):
         conn.close()
         return {"message": "If that email or phone is registered, a reset token has been generated."}
 
-    conn.execute(
-        "UPDATE password_resets SET used = 1 WHERE user_id = ? AND used = 0",
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE password_resets SET used = 1 WHERE user_id = %s AND used = 0",
         (db_user["id"],)
     )
 
     token = secrets.token_urlsafe(32)
     expires_at = datetime.utcnow() + timedelta(hours=1)
 
-    conn.execute(
-        "INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)",
+    cur.execute(
+        "INSERT INTO password_resets (user_id, token, expires_at) VALUES (%s, %s, %s)",
         (db_user["id"], token, expires_at)
     )
     conn.commit()
@@ -153,10 +158,12 @@ async def forgot_password(data: ForgotPassword):
 @router.post("/reset-password")
 async def reset_password(data: ResetPassword):
     conn = get_connection()
-    reset = conn.execute(
-        "SELECT * FROM password_resets WHERE token = ? AND used = 0 AND expires_at > ?",
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT * FROM password_resets WHERE token = %s AND used = 0 AND expires_at > %s",
         (data.token, datetime.utcnow())
-    ).fetchone()
+    )
+    reset = cur.fetchone()
 
     if not reset:
         conn.close()
@@ -164,12 +171,12 @@ async def reset_password(data: ResetPassword):
 
     password_hash = hash_password(data.password)
 
-    conn.execute(
-        "UPDATE users SET password_hash = ? WHERE id = ?",
+    cur.execute(
+        "UPDATE users SET password_hash = %s WHERE id = %s",
         (password_hash, reset["user_id"])
     )
-    conn.execute(
-        "UPDATE password_resets SET used = 1 WHERE id = ?",
+    cur.execute(
+        "UPDATE password_resets SET used = 1 WHERE id = %s",
         (reset["id"],)
     )
     conn.commit()
