@@ -1,7 +1,7 @@
 import hashlib
 import os
 import secrets
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response, Request, Depends
 from jose import jwt
 from datetime import datetime, timedelta
 from app.database import get_connection
@@ -38,6 +38,22 @@ def find_user_by_login(conn, login: str):
         return conn.execute(
             "SELECT * FROM users WHERE phone = ?", (login,)
         ).fetchone()
+
+
+@router.get("/me")
+async def me(request: Request):
+    conn = get_connection()
+    user = conn.execute(
+        "SELECT id, username, email, phone FROM users WHERE id = ?",
+        (request.state.user_id,)
+    ).fetchone()
+    conn.close()
+    return {
+        "user_id": user["id"],
+        "username": user["username"],
+        "email": user["email"],
+        "phone": user["phone"],
+    }
 
 
 @router.post("/register")
@@ -98,7 +114,13 @@ async def login(user: UserLogin, response: Response):
         samesite="lax"
     )
 
-    return {"message": "Login successful", "redirect": "/"}
+    return {
+        "message": "Login successful",
+        "redirect": "/",
+        "user_id": db_user["id"],
+        "username": db_user["username"],
+        "email": db_user["email"],
+    }
 
 
 @router.post("/forgot-password")
