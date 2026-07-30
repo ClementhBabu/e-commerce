@@ -70,11 +70,6 @@ e-commerce/
 │   │       └── Logout.jsx         # Clear auth + redirect
 │   ├── vite.config.js            # Vite + Tailwind + API proxy
 │   └── package.json
-├── start.py                      # Start both backend + frontend
-├── start_backend.py              # Start backend only (:8000)
-├── start_frontend.py             # Start frontend dev server (:5173)
-├── start_prod.py                 # Build + serve production
-├── run.py                        # Backend entry point
 ├── requirements.txt              # Python dependencies
 └── README.md
 ```
@@ -128,31 +123,40 @@ Create a database named `shophub` (or point `DATABASE_URL` at your own), then se
 
 ### Running in Development
 
-**Option A - Start both servers at once:**
+Run the backend and frontend in two terminals:
 
 ```bash
-python start.py
+# Terminal 1: Backend (http://127.0.0.1:8000)
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+# Terminal 2: Frontend (http://localhost:5173)
+cd frontend
+npm run dev
 ```
 
-**Option B - Start servers separately (two terminals):**
-
-```bash
-# Terminal 1: Backend
-python start_backend.py        # http://127.0.0.1:8000
-
-# Terminal 2: Frontend
-python start_frontend.py       # http://localhost:5173
-```
-
-Open **http://localhost:5173** in your browser. The Vite dev server proxies API calls to the backend automatically.
+Open **http://localhost:5173** in your browser. The Vite dev server proxies `/api` calls to the backend automatically.
 
 ### Running in Production
 
+1. **Build the frontend:**
+
 ```bash
-python start_prod.py
+cd frontend
+npm run build
+cd ..
 ```
 
-This builds the React app and serves everything on **http://127.0.0.1:8000**.
+This produces `frontend/dist`, which the backend serves directly as the SPA (see `FRONTEND_DIST` handling in `app/main.py`) — no separate frontend server is needed in production.
+
+2. **Set production environment variables** (see [Environment Variables](#environment-variables)) — in particular `SECRET_KEY` and `ALLOWED_ORIGINS` must be set explicitly.
+
+3. **Run the backend with a production ASGI server**, without `--reload`:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+```
+
+Put this behind a reverse proxy (nginx, Caddy, etc.) for TLS termination in a real deployment.
 
 ## Usage
 
@@ -218,13 +222,17 @@ PostgreSQL with 7 tables: `users`, `products`, `password_resets`, `cart_items`, 
 
 | Variable | Required | Description |
 |----------|----------|-------------|
+| `SECRET_KEY` | **Yes** | Secret used to sign JWT auth cookies. The app will not start without it. Generate one with `python -c "import secrets; print(secrets.token_hex(32))"` |
 | `DATABASE_URL` | No (defaults to `postgresql://postgres:postgres@localhost:5432/shophub`) | PostgreSQL connection string |
+| `ALLOWED_ORIGINS` | No (defaults to `http://localhost:5173,http://127.0.0.1:5173`) | Comma-separated list of origins allowed by CORS. Set to your deployed frontend origin(s) in production |
 | `DEEPSEEK_API_KEY` | For chat | DeepSeek API key (also supports `OPENAI_API_KEY`) |
 
 Create a `.env` file in the project root:
 
 ```env
+SECRET_KEY=replace-with-a-random-secret
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/shophub
+ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 DEEPSEEK_API_KEY=sk-your-key-here
 ```
 

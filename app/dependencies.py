@@ -1,7 +1,11 @@
+import os
+from dotenv import load_dotenv
 from fastapi import Request, HTTPException
 from jose import jwt, JWTError
 
-SECRET_KEY = "ecommerce-secret-key-change-in-production-2024"
+load_dotenv()
+
+SECRET_KEY = os.environ["SECRET_KEY"]
 ALGORITHM = "HS256"
 
 
