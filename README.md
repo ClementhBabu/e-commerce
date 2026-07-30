@@ -1,6 +1,6 @@
 # ShopHub - Full-Stack E-Commerce Application
 
-A modern full-stack e-commerce web application built with **React**, **FastAPI**, and **SQLite3**. Features user authentication, product browsing, shopping cart, dummy payment checkout, AI chatbot, and address management with a polished responsive UI.
+A modern full-stack e-commerce web application built with **React**, **FastAPI**, and **PostgreSQL**. Features user authentication, product browsing, shopping cart, dummy payment checkout, AI chatbot, and address management with a polished responsive UI.
 
 ## Features
 
@@ -19,7 +19,7 @@ A modern full-stack e-commerce web application built with **React**, **FastAPI**
 ## Tech Stack
 
 - **Frontend**: React 19, Vite 8, Tailwind CSS v4, React Router v6
-- **Backend**: Python 3.10+, FastAPI, SQLite3
+- **Backend**: Python 3.10+, FastAPI, PostgreSQL
 - **Authentication**: JWT (python-jose) with HTTP-only cookies
 - **AI**: OpenAI-compatible API (DeepSeek Chat)
 
@@ -30,7 +30,7 @@ e-commerce/
 ├── app/                          # FastAPI backend (API only)
 │   ├── __init__.py
 │   ├── main.py                   # App entry, CORS, auth middleware, SPA serving
-│   ├── database.py               # SQLite3 connection, schema, seed data
+│   ├── database.py               # PostgreSQL connection, schema, seed data
 │   ├── dependencies.py           # JWT helpers and config
 │   ├── schemas.py                # Pydantic request/response models
 │   └── routers/
@@ -85,6 +85,7 @@ e-commerce/
 
 - **Python 3.10+** (works with 3.12)
 - **Node.js 18+** (for the React frontend)
+- **PostgreSQL** (running locally or reachable via `DATABASE_URL`)
 - pip and npm
 
 ### Installation
@@ -120,6 +121,10 @@ cd frontend
 npm install
 cd ..
 ```
+
+5. **Configure the database:**
+
+Create a database named `shophub` (or point `DATABASE_URL` at your own), then set it in your `.env` file (see [Environment Variables](#environment-variables)). Tables and seed data are created automatically on first run.
 
 ### Running in Development
 
@@ -207,17 +212,19 @@ This builds the React app and serves everything on **http://127.0.0.1:8000**.
 
 ## Database
 
-SQLite3 with 7 tables: `users`, `products`, `password_resets`, `cart_items`, `addresses`, `orders`, `order_items`. The database (`ecommerce.db`) is auto-created on first run with 486 seed products across 9 categories.
+PostgreSQL with 7 tables: `users`, `products`, `password_resets`, `cart_items`, `addresses`, `orders`, `order_items`. Tables and 486 seed products across 9 categories are created automatically on first run (see `app/database.py`).
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
+| `DATABASE_URL` | No (defaults to `postgresql://postgres:postgres@localhost:5432/shophub`) | PostgreSQL connection string |
 | `DEEPSEEK_API_KEY` | For chat | DeepSeek API key (also supports `OPENAI_API_KEY`) |
 
 Create a `.env` file in the project root:
 
 ```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/shophub
 DEEPSEEK_API_KEY=sk-your-key-here
 ```
 
