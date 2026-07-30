@@ -2,13 +2,17 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import { useWishlist } from '../context/WishlistContext';
 import { useNavigate } from 'react-router-dom';
+import { NO_IMAGE_PLACEHOLDER, formatPrice } from '../utils/format';
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
   const { showToast } = useToast();
   const { isAuthenticated } = useAuth();
+  const { productIds, toggleWishlist } = useWishlist();
   const navigate = useNavigate();
+  const inWishlist = productIds.has(product.id);
 
   const handleAddToCart = async (e) => {
     e.preventDefault();
@@ -22,6 +26,21 @@ export default function ProductCard({ product }) {
       showToast(`${product.name} added to cart!`, 'success');
     } catch (err) {
       showToast(err.message || 'Failed to add to cart', 'error');
+    }
+  };
+
+  const handleToggleWishlist = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    try {
+      const added = await toggleWishlist(product.id);
+      showToast(added ? `${product.name} added to wishlist!` : `${product.name} removed from wishlist`, 'success');
+    } catch (err) {
+      showToast(err.message || 'Failed to update wishlist', 'error');
     }
   };
 
@@ -42,12 +61,18 @@ export default function ProductCard({ product }) {
           src={product.image_url}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          onError={(e) => { e.target.src = 'https://via.placeholder.com/400x400?text=No+Image'; }}
+          onError={(e) => { e.target.onerror = null; e.target.src = NO_IMAGE_PLACEHOLDER; }}
           loading="lazy"
         />
         <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-xs font-semibold px-2 py-1 rounded-full text-indigo-600">
           {product.category}
         </span>
+        <button
+          onClick={handleToggleWishlist}
+          className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors"
+        >
+          <i className={`${inWishlist ? 'fas text-red-500' : 'far text-gray-500'} fa-heart text-sm`}></i>
+        </button>
       </div>
       <div className="p-4">
         <div className="flex items-center gap-1 mb-1.5">
@@ -57,7 +82,7 @@ export default function ProductCard({ product }) {
         <h3 className="font-semibold text-gray-800 text-sm line-clamp-1 group-hover:text-indigo-600 transition-colors">{product.name}</h3>
         <p className="text-xs text-gray-500 mt-1 line-clamp-2">{product.description}</p>
         <div className="flex items-center justify-between mt-3">
-          <span className="text-lg font-bold text-indigo-600">${product.price.toFixed(2)}</span>
+          <span className="text-lg font-bold text-indigo-600">{formatPrice(product.price)}</span>
           <button onClick={handleAddToCart} className="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white px-3 py-1.5 rounded-lg transition-all duration-200 font-medium">
             <i className="fas fa-cart-plus mr-1"></i>Add
           </button>

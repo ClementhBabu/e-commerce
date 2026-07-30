@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { cart } from '../api';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
+import { NO_IMAGE_PLACEHOLDER, formatPrice } from '../utils/format';
 
 export default function CartPage() {
   const [items, setItems] = useState([]);
@@ -84,7 +85,7 @@ export default function CartPage() {
             <div key={item.id} className="bg-white rounded-xl border border-gray-100 p-4 flex gap-4 shadow-sm">
               <Link to={`/product/${item.product_id}`} className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 shrink-0">
                 <img src={item.image_url} alt={item.name} className="w-full h-full object-cover"
-                     onError={(e) => { e.target.src = 'https://via.placeholder.com/200x200?text=No+Image'; }} />
+                     onError={(e) => { e.target.onerror = null; e.target.src = NO_IMAGE_PLACEHOLDER; }} />
               </Link>
               <div className="flex-1 min-w-0">
                 <Link to={`/product/${item.product_id}`} className="font-semibold text-gray-800 hover:text-indigo-600 transition-colors text-sm line-clamp-1">
@@ -105,7 +106,7 @@ export default function CartPage() {
                     </button>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="font-bold text-indigo-600">${(item.price * item.quantity).toFixed(2)}</span>
+                    <span className="font-bold text-indigo-600">{formatPrice(item.price * item.quantity)}</span>
                     <button onClick={() => handleRemove(item.id)} className="text-gray-400 hover:text-red-500 transition-colors">
                       <i className="fas fa-trash-alt"></i>
                     </button>
@@ -121,17 +122,17 @@ export default function CartPage() {
             <h3 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h3>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between text-gray-600">
-                <span>Subtotal</span><span>${total.toFixed(2)}</span>
+                <span>Subtotal</span><span>{formatPrice(total)}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Shipping</span><span className="text-green-600 font-medium">FREE</span>
               </div>
               <div className="flex justify-between text-gray-600">
-                <span>Tax (8%)</span><span>${(total * 0.08).toFixed(2)}</span>
+                <span>Tax (8%)</span><span>{formatPrice(total * 0.08)}</span>
               </div>
               <hr />
               <div className="flex justify-between font-bold text-gray-900 text-lg">
-                <span>Total</span><span>${(total * 1.08).toFixed(2)}</span>
+                <span>Total</span><span>{formatPrice(total * 1.08)}</span>
               </div>
             </div>
             <Link to="/address" className="block w-full mt-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-center font-semibold rounded-xl transition-colors shadow-lg shadow-indigo-200">

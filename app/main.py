@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db
 from app.dependencies import SECRET_KEY, ALGORITHM
-from app.routers import auth, products, cart, checkout, chat, address
+from app.routers import auth, products, cart, checkout, chat, address, orders, wishlist
 from jose import jwt, JWTError
 from pathlib import Path
 
@@ -34,6 +34,8 @@ app.include_router(cart.router, prefix="/api/cart", tags=["cart"])
 app.include_router(checkout.router, prefix="/api/checkout", tags=["checkout"])
 app.include_router(address.router, prefix="/api/address", tags=["address"])
 app.include_router(chat.router, prefix="/api", tags=["chat"])
+app.include_router(orders.router, prefix="/api", tags=["orders"])
+app.include_router(wishlist.router, prefix="/api/wishlist", tags=["wishlist"])
 
 
 @app.on_event("startup")

@@ -4,7 +4,9 @@ import { products } from '../api';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import { useWishlist } from '../context/WishlistContext';
 import { useNavigate } from 'react-router-dom';
+import { NO_IMAGE_PLACEHOLDER, formatPrice } from '../utils/format';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -14,7 +16,9 @@ export default function ProductDetail() {
   const { addToCart } = useCart();
   const { showToast } = useToast();
   const { isAuthenticated } = useAuth();
+  const { productIds, toggleWishlist } = useWishlist();
   const navigate = useNavigate();
+  const inWishlist = product ? productIds.has(product.id) : false;
 
   useEffect(() => {
     (async () => {
@@ -46,6 +50,16 @@ export default function ProductDetail() {
       showToast(`${product.name} added to cart!`, 'success');
     } catch (err) {
       showToast(err.message || 'Failed to add to cart', 'error');
+    }
+  };
+
+  const handleToggleWishlist = async () => {
+    if (!isAuthenticated) { navigate('/login'); return; }
+    try {
+      const added = await toggleWishlist(product.id);
+      showToast(added ? `${product.name} added to wishlist!` : `${product.name} removed from wishlist`, 'success');
+    } catch (err) {
+      showToast(err.message || 'Failed to update wishlist', 'error');
     }
   };
 
@@ -84,7 +98,7 @@ export default function ProductDetail() {
               src={product.image_url}
               alt={product.name}
               className="w-full h-full object-cover"
-              onError={(e) => { e.target.src = 'https://via.placeholder.com/600x600?text=No+Image'; }}
+              onError={(e) => { e.target.onerror = null; e.target.src = NO_IMAGE_PLACEHOLDER; }}
             />
             <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-sm font-semibold px-3 py-1.5 rounded-full text-indigo-600">
               {product.category}
@@ -101,7 +115,7 @@ export default function ProductDetail() {
             <span className="text-sm text-gray-500">({Math.round(product.rating * 37)} reviews)</span>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
-          <p className="text-4xl font-bold text-indigo-600 mb-1">${product.price.toFixed(2)}</p>
+          <p className="text-4xl font-bold text-indigo-600 mb-1">{formatPrice(product.price)}</p>
           <p className="text-sm text-green-600 mb-6"><i className="fas fa-truck mr-1"></i>Free shipping</p>
 
           <div className="prose prose-sm text-gray-600 mb-6">
@@ -132,8 +146,13 @@ export default function ProductDetail() {
             <button onClick={handleAddToCart} className="flex-1 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-indigo-200">
               <i className="fas fa-cart-plus mr-2"></i>Add to Cart
             </button>
-            <button className="w-14 h-14 flex items-center justify-center border-2 border-gray-200 rounded-xl hover:border-red-300 hover:text-red-500 transition-colors">
-              <i className="far fa-heart text-xl"></i>
+            <button
+              onClick={handleToggleWishlist}
+              className={`w-14 h-14 flex items-center justify-center border-2 rounded-xl transition-colors ${
+                inWishlist ? 'border-red-300 text-red-500' : 'border-gray-200 hover:border-red-300 hover:text-red-500'
+              }`}
+            >
+              <i className={`${inWishlist ? 'fas' : 'far'} fa-heart text-xl`}></i>
             </button>
           </div>
 

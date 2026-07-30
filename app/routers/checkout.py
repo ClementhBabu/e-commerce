@@ -52,7 +52,8 @@ async def process_checkout(request: Request):
         return {
             "success": True,
             "message": "Payment successful! Your order has been placed.",
-            "total": total
+            "total": total,
+            "order_id": order_id
         }
     else:
         conn.close()

@@ -19,7 +19,7 @@ STRICT RULES:
 ShopHub Store Information:
 - ShopHub is a demo e-commerce platform built with FastAPI and React
 - Categories available: Electronics, Fashion, Food & Beverages, Accessories, Home & Kitchen, Sports
-- All prices are in USD
+- All prices are in Indian Rupees (INR)
 - Free shipping on all orders
 - Support email: support@shophub.demo
 - Payment is handled securely in demo mode
@@ -51,7 +51,7 @@ async def chat(request: Request, body: ChatRequest):
     conn.close()
 
     product_context = "Current Product Catalog:\n" + "\n".join(
-        f"- [{p['category']}] {p['name']} — ${p['price']:.2f} — "
+        f"- [{p['category']}] {p['name']} — ₹{p['price']:.0f} — "
         f"Rating: {p['rating']}/5 — Stock: {p['stock']} — {p['description'][:120]}"
         for p in products
     )
