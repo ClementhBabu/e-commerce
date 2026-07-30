@@ -58,3 +58,20 @@ export const address = {
 export const chat = {
   send: (message) => request('/chat', { method: 'POST', body: JSON.stringify({ message }) }),
 };
+
+export const orders = {
+  list: () => request('/orders'),
+  get: (id) => request(`/orders/${id}`),
+  requestReturn: (id, reason) => request(`/orders/${id}/return`, { method: 'POST', body: JSON.stringify({ reason }) }),
+};
+
+export const returns = {
+  list: () => request('/returns'),
+};
+
+export const wishlist = {
+  get: () => request('/wishlist'),
+  add: (productId) => request('/wishlist/add', { method: 'POST', body: JSON.stringify({ product_id: productId }) }),
+  remove: (productId) => request(`/wishlist/remove/${productId}`, { method: 'DELETE' }),
+};
+

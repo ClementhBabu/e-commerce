@@ -44,8 +44,9 @@ export default function Footer() {
             <h4 className="text-white font-semibold mb-4">Contact</h4>
             <ul className="space-y-2 text-sm">
               <li className="flex items-center space-x-2"><i className="fas fa-envelope w-4"></i><span>support@shophub.com</span></li>
-              <li className="flex items-center space-x-2"><i className="fas fa-phone w-4"></i><span>+1 (555) 123-4567</span></li>
-              <li className="flex items-center space-x-2"><i className="fas fa-map-marker-alt w-4"></i><span>123 Commerce St, NY</span></li>
+              <li className="flex items-center space-x-2"><i className="fas fa-phone w-4"></i><span>+91 98765 43210</span></li>
+              <li className="flex items-start space-x-2"><i className="fas fa-map-marker-alt w-4 mt-1"></i><span>4th Floor, Prestige Tech Park, Bengaluru, Karnataka 560103, India</span></li>
+
             </ul>
           </div>
         </div>

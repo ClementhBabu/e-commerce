@@ -2,10 +2,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
+
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { count } = useCart();
+  const { count: wishlistCount } = useWishlist();
+
   const [search, setSearch] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -61,6 +65,15 @@ export default function Navbar() {
 
             {isAuthenticated ? (
               <>
+                <Link to="/wishlist" className="hidden md:flex relative items-center space-x-1 text-gray-600 hover:text-indigo-600 transition-colors">
+                  <i className="far fa-heart text-lg"></i>
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-2 -right-3 bg-indigo-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </Link>
+
                 <Link to="/cart" className="relative flex items-center space-x-1 text-gray-600 hover:text-indigo-600 transition-colors">
                   <i className="fas fa-shopping-cart text-lg"></i>
                   {count > 0 && (
@@ -89,6 +102,16 @@ export default function Navbar() {
                       <Link to="/cart" onClick={() => setDropdownOpen(false)} className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                         <i className="fas fa-shopping-cart mr-3 text-gray-400 w-4"></i>My Cart
                       </Link>
+                      <Link to="/orders" onClick={() => setDropdownOpen(false)} className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i className="fas fa-box mr-3 text-gray-400 w-4"></i>My Orders
+                      </Link>
+                      <Link to="/wishlist" onClick={() => setDropdownOpen(false)} className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i className="far fa-heart mr-3 text-gray-400 w-4"></i>Wishlist
+                      </Link>
+                      <Link to="/returns" onClick={() => setDropdownOpen(false)} className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i className="fas fa-rotate-left mr-3 text-gray-400 w-4"></i>Returns
+                      </Link>
+
                       <Link to="/address" onClick={() => setDropdownOpen(false)} className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                         <i className="fas fa-map-marker-alt mr-3 text-gray-400 w-4"></i>Addresses
                       </Link>
@@ -131,6 +154,10 @@ export default function Navbar() {
             {isAuthenticated ? (
               <>
                 <Link to="/cart" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700">Cart ({count})</Link>
+                <Link to="/orders" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700">My Orders</Link>
+                <Link to="/wishlist" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700">Wishlist ({wishlistCount})</Link>
+                <Link to="/returns" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700">Returns</Link>
+
                 <Link to="/address" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700">Addresses</Link>
                 <button onClick={handleLogout} className="block py-2 text-red-600 w-full text-left">Logout</button>
               </>

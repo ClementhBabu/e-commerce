@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { cart, checkout, address as addrApi } from '../api';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
+import { NO_IMAGE_PLACEHOLDER, formatPrice } from '../utils/format';
+
 
 export default function Checkout() {
   const [items, setItems] = useState([]);
@@ -76,7 +78,8 @@ export default function Checkout() {
       if (data.success) {
         setCount(0);
         showToast('Payment successful!', 'success');
-        setTimeout(() => navigate('/?order=success'), 800);
+        setTimeout(() => navigate(`/orders/${data.order_id}?success=1`), 800);
+
       } else {
         showToast(data.message || 'Payment failed', 'error');
       }
@@ -159,22 +162,25 @@ export default function Checkout() {
               {items.map((item) => (
                 <div key={item.id} className="flex items-center gap-3">
                   <img src={item.image_url} alt={item.name} className="w-12 h-12 rounded-lg object-cover bg-gray-100"
-                       onError={(e) => { e.target.src = 'https://via.placeholder.com/100x100?text=N'; }} />
+                       onError={(e) => { e.target.onerror = null; e.target.src = NO_IMAGE_PLACEHOLDER; }} />
+
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-gray-700 line-clamp-1">{item.name}</p>
                     <p className="text-xs text-gray-400">Qty: {item.quantity}</p>
                   </div>
-                  <span className="text-xs font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="text-xs font-semibold">{formatPrice(item.price * item.quantity)}</span>
+
                 </div>
               ))}
             </div>
 
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>${total.toFixed(2)}</span></div>
+              <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>{formatPrice(total)}</span></div>
               <div className="flex justify-between text-gray-600"><span>Shipping</span><span className="text-green-600 font-medium">FREE</span></div>
-              <div className="flex justify-between text-gray-600"><span>Tax (8%)</span><span>${(total * 0.08).toFixed(2)}</span></div>
+              <div className="flex justify-between text-gray-600"><span>Tax (8%)</span><span>{formatPrice(total * 0.08)}</span></div>
               <hr />
-              <div className="flex justify-between font-bold text-gray-900 text-lg"><span>Total</span><span>${(total * 1.08).toFixed(2)}</span></div>
+              <div className="flex justify-between font-bold text-gray-900 text-lg"><span>Total</span><span>{formatPrice(total * 1.08)}</span></div>
+
             </div>
 
             <button onClick={handleSubmit} disabled={processing}

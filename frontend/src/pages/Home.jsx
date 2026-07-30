@@ -52,6 +52,7 @@ export default function Home() {
     })();
   }, []);
 
+<<<<<<< HEAD
   useEffect(() => {
     const orderSuccess = searchParams.get('order');
     if (orderSuccess === 'success') {
@@ -62,6 +63,8 @@ export default function Home() {
     }
   }, []);
 
+=======
+>>>>>>> b957dc6447dbbea98f73cedf1e9025740e2a4971
   const filteredProducts = allProducts.filter((p) => {
     if (activeCategory !== 'All' && p.category !== activeCategory) return false;
     const search = searchParams.get('search');
@@ -107,7 +110,11 @@ export default function Home() {
       <section className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <span className="inline-block bg-indigo-100 text-indigo-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-4">
+<<<<<<< HEAD
             <i className="fas fa-truck mr-2"></i>Free Shipping on Orders Over $50
+=======
+            <i className="fas fa-truck mr-2"></i>Free Shipping on Orders Over ₹4,000
+>>>>>>> b957dc6447dbbea98f73cedf1e9025740e2a4971
           </span>
           <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 leading-tight">
             Discover Premium Products at{' '}
@@ -124,7 +131,11 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-4 py-8 border-b border-gray-200">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           {[
+<<<<<<< HEAD
             { icon: 'fa-truck-fast', title: 'Free Shipping', desc: 'Orders over $50' },
+=======
+            { icon: 'fa-truck-fast', title: 'Free Shipping', desc: 'Orders over ₹4,000' },
+>>>>>>> b957dc6447dbbea98f73cedf1e9025740e2a4971
             { icon: 'fa-shield-halved', title: 'Secure Payment', desc: '100% protected' },
             { icon: 'fa-headset', title: '24/7 Support', desc: 'Dedicated support' },
             { icon: 'fa-rotate-left', title: 'Easy Returns', desc: '30-day returns' },

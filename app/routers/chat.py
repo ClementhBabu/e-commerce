@@ -17,9 +17,9 @@ STRICT RULES:
 5. Do NOT make up products or features that don't exist. Only reference what you know from the store context provided below.
 
 ShopHub Store Information:
-- ShopHub is a demo e-commerce platform built with FastAPI
+- ShopHub is a demo e-commerce platform built with FastAPI and React
 - Categories available: Electronics, Fashion, Food & Beverages, Accessories, Home & Kitchen, Sports
-- All prices are in USD
+- All prices are in Indian Rupees (INR)
 - Free shipping on all orders
 - Support email: support@shophub.demo
 - Payment is handled securely in demo mode
@@ -43,13 +43,15 @@ async def chat(request: Request, body: ChatRequest):
         return {"response": "Sorry, the AI assistant is not configured. Please set the DEEPSEEK_API_KEY environment variable."}
 
     conn = get_connection()
-    products = conn.execute(
+    cur = conn.cursor()
+    cur.execute(
         "SELECT id, name, price, category, description, rating, stock FROM products"
-    ).fetchall()
+    )
+    products = cur.fetchall()
     conn.close()
 
     product_context = "Current Product Catalog:\n" + "\n".join(
-        f"- [{p['category']}] {p['name']} — ${p['price']:.2f} — "
+        f"- [{p['category']}] {p['name']} — ₹{p['price']:.0f} — "
         f"Rating: {p['rating']}/5 — Stock: {p['stock']} — {p['description'][:120]}"
         for p in products
     )

@@ -36,6 +36,14 @@ class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=1000)
 
 
+class WishlistAdd(BaseModel):
+    product_id: int
+
+
+class ReturnRequest(BaseModel):
+    reason: str = Field(..., min_length=1, max_length=500)
+
+
 class AddressCreate(BaseModel):
     full_name: str = Field(..., min_length=1, max_length=100)
     phone: str = Field(..., min_length=10, max_length=20)
