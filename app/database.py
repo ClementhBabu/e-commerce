@@ -1,22 +1,52 @@
-import sqlite3
+import os
+import psycopg2
+import psycopg2.extras
+from dotenv import load_dotenv
 
-DATABASE_NAME = "ecommerce.db"
+load_dotenv()
+
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://postgres:postgres@localhost:5432/shophub",
+)
 
 
 def get_connection():
-    conn = sqlite3.connect(DATABASE_NAME)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+    conn.autocommit = False
     return conn
+
+
+class _Cursor:
+    def __init__(self, conn):
+        self.conn = conn
+        self.cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    def execute(self, query, params=None):
+        self.cur.execute(query, params)
+        return self.cur
+
+    def commit(self):
+        self.conn.commit()
+
+    def close(self):
+        self.cur.close()
+        self.conn.close()
+
+    def fetchone(self):
+        return self.cur.fetchone()
+
+    def fetchall(self):
+        return self.cur.fetchall()
 
 
 def init_db():
     conn = get_connection()
-    cursor = conn.cursor()
+    cur = conn.cursor()
 
-    cursor.execute("""
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT UNIQUE NOT NULL,
             email TEXT UNIQUE NOT NULL,
             phone TEXT UNIQUE,
@@ -25,12 +55,12 @@ def init_db():
         )
     """)
 
-    cursor.execute("""
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             name TEXT NOT NULL,
             description TEXT NOT NULL,
-            price REAL NOT NULL,
+            price NUMERIC(10,2) NOT NULL,
             image_url TEXT NOT NULL,
             category TEXT NOT NULL,
             rating REAL DEFAULT 4.0,
@@ -39,33 +69,30 @@ def init_db():
         )
     """)
 
-    cursor.execute("""
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS password_resets (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
             token TEXT UNIQUE NOT NULL,
             expires_at TIMESTAMP NOT NULL,
-            used INTEGER DEFAULT 0,
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            used INTEGER DEFAULT 0
         )
     """)
 
-    cursor.execute("""
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS cart_items (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            product_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            product_id INTEGER NOT NULL REFERENCES products(id),
             quantity INTEGER DEFAULT 1,
-            FOREIGN KEY (user_id) REFERENCES users (id),
-            FOREIGN KEY (product_id) REFERENCES products (id),
             UNIQUE(user_id, product_id)
         )
     """)
 
-    cursor.execute("""
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS addresses (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
             full_name TEXT NOT NULL,
             phone TEXT NOT NULL,
             street_address TEXT NOT NULL,
@@ -73,44 +100,44 @@ def init_db():
             state TEXT NOT NULL,
             pincode TEXT NOT NULL,
             is_default INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
 
-    cursor.execute("""
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            address_id INTEGER,
-            total REAL NOT NULL,
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            address_id INTEGER REFERENCES addresses(id),
+            total NUMERIC(10,2) NOT NULL,
             payment_status TEXT DEFAULT 'completed',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id),
-            FOREIGN KEY (address_id) REFERENCES addresses (id)
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
 
-    cursor.execute("""
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS order_items (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            order_id INTEGER NOT NULL,
-            product_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            order_id INTEGER NOT NULL REFERENCES orders(id),
+            product_id INTEGER NOT NULL REFERENCES products(id),
             product_name TEXT NOT NULL,
-            price REAL NOT NULL,
-            quantity INTEGER NOT NULL,
-            FOREIGN KEY (order_id) REFERENCES orders (id),
-            FOREIGN KEY (product_id) REFERENCES products (id)
+            price NUMERIC(10,2) NOT NULL,
+            quantity INTEGER NOT NULL
         )
     """)
+
+    conn.commit()
 
     try:
-        cursor.execute("ALTER TABLE users ADD COLUMN phone TEXT")
-    except sqlite3.OperationalError:
-        pass
+        cur.execute("ALTER TABLE users ADD COLUMN phone TEXT")
+        conn.commit()
+    except psycopg2.errors.DuplicateColumn:
+        conn.rollback()
+    except psycopg2.Error:
+        conn.rollback()
 
-    cursor.execute("SELECT COUNT(*) FROM products")
-    if cursor.fetchone()[0] == 0:
+    cur.execute("SELECT COUNT(*) as count FROM products")
+    if cur.fetchone()["count"] == 0:
         products = [
             ("Wireless Bluetooth Headphones",
              "Premium noise-cancelling wireless headphones with 30-hour battery life. Features deep bass, comfortable ear cushions, and built-in microphone for crystal clear calls.",
@@ -221,10 +248,11 @@ def init_db():
              "Timeless blue denim jacket with button closure. Regular fit, soft cotton blend, and classic chest pockets. A wardrobe essential.",
              69.99, "https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?w=600&h=600&fit=crop", "Fashion", 4.4),
         ]
-        cursor.executemany(
-            "INSERT INTO products (name, description, price, image_url, category, rating) VALUES (?, ?, ?, ?, ?, ?)",
-            products
+        cur.executemany(
+            "INSERT INTO products (name, description, price, image_url, category, rating) VALUES (%s, %s, %s, %s, %s, %s)",
+            products,
         )
 
     conn.commit()
+    cur.close()
     conn.close()

@@ -1,64 +1,81 @@
 # ShopHub - Full-Stack E-Commerce Application
 
-A modern, responsive full-stack e-commerce web application built with **Python**, **FastAPI**, and **SQLite3**. Features user authentication (email + phone), product browsing, AI-powered chatbot, shopping cart, and dummy payment checkout with a polished, modern UI.
+A modern full-stack e-commerce web application built with **React**, **FastAPI**, and **PostgreSQL**. Features user authentication, product browsing, shopping cart, dummy payment checkout, AI chatbot, and address management with a polished responsive UI.
 
 ## Features
 
-- **User Authentication** — Register and login with email or phone number. PBKDF2 password hashing with JWT token-based sessions
-- **Password Reset** — Forgot password flow with secure reset tokens
-- **AI Chatbot (ShopBot)** — DeepSeek-powered assistant that answers store-related questions only, available on every page
-- **Protected Routes** — Middleware redirects unauthenticated users to login
-- **Product Browsing** — 36 products across 9 categories with search and filter
-- **Product Details** — Star ratings, stock urgency badges, delivery & returns info
-- **Shopping Cart** — Add/remove items, update quantities, order summary
-- **Checkout** — Dummy payment with card formatting and 90% success rate
-- **Responsive Design** — Mobile-first UI built with Tailwind CSS
-- **Modern UI/UX** — Animated hero, glassmorphism navbar, hover effects, toast notifications, staggered card animations
+- **User Authentication** - Registration and login with PBKDF2-SHA256 password hashing and JWT cookie-based sessions
+- **Protected Routes** - React route guards redirect unauthenticated users to login
+- **Product Browsing** - Browse 486 products across 9 categories with filtering and search
+- **Product Details** - Full product view with images, descriptions, ratings, quantity selector
+- **Shopping Cart** - Add/remove items, update quantities, persistent per-user cart
+- **Checkout** - Address management, dummy payment with card formatting (90% success rate)
+- **AI Chatbot** - ShopBot answers product and order questions (DeepSeek/OpenAI powered)
+- **Password Reset** - Forgot/reset password flow with secure tokens
+- **Address Management** - Save addresses with geolocation auto-fill
+- **Responsive Design** - Mobile-first UI built with Tailwind CSS
+- **Toast Notifications** - Real-time feedback for all user actions
 
 ## Tech Stack
 
-- **Backend**: Python 3.8+, FastAPI, SQLite3
-- **Frontend**: HTML5, CSS3, JavaScript, Tailwind CSS (CDN), Font Awesome 6
-- **Authentication**: JWT (python-jose), PBKDF2 password hashing
-- **AI**: OpenAI-compatible API (DeepSeek default)
-- **Template Engine**: Jinja2
+- **Frontend**: React 19, Vite 8, Tailwind CSS v4, React Router v6
+- **Backend**: Python 3.10+, FastAPI, PostgreSQL
+- **Authentication**: JWT (python-jose) with HTTP-only cookies
+- **AI**: OpenAI-compatible API (DeepSeek Chat)
 
 ## Project Structure
 
 ```
 e-commerce/
-├── app/
+├── app/                          # FastAPI backend (API only)
 │   ├── __init__.py
-│   ├── main.py              # FastAPI entry point, page routes, middleware, dotenv
-│   ├── database.py          # SQLite3 connection, schema, seed data (36 products)
-│   ├── dependencies.py      # JWT auth helpers
-│   ├── schemas.py           # Pydantic request/response models
-│   ├── routers/
-│   │   ├── __init__.py
-│   │   ├── auth.py          # Register, login, forgot/reset password
-│   │   ├── products.py      # Product listing and detail APIs
-│   │   ├── cart.py          # Cart CRUD APIs
-│   │   ├── checkout.py      # Dummy payment processing
-│   │   └── chat.py          # AI chatbot endpoint (DeepSeek)
-│   └── templates/
-│       ├── base.html        # Base layout (navbar, footer, chat widget)
-│       ├── index.html       # Home page (hero, categories, product grid, newsletter)
-│       ├── login.html       # Login (email or phone)
-│       ├── register.html    # Registration (username, email, phone, password)
-│       ├── forgot_password.html
-│       ├── reset_password.html
-│       ├── product_detail.html
-│       ├── cart.html
-│       └── checkout.html
-├── static/
-│   ├── css/
-│   │   └── style.css        # Custom styles, animations, chat widget
-│   └── js/
-│       └── script.js        # Shared utilities, cart, chat widget
-├── .env                     # DEEPSEEK_API_KEY (gitignored)
-├── .gitignore
-├── run.py                   # Application entry point (uvicorn)
-├── requirements.txt
+│   ├── main.py                   # App entry, CORS, auth middleware, SPA serving
+│   ├── database.py               # PostgreSQL connection, schema, seed data
+│   ├── dependencies.py           # JWT helpers and config
+│   ├── schemas.py                # Pydantic request/response models
+│   └── routers/
+│       ├── __init__.py
+│       ├── auth.py               # Register, login, me, password reset
+│       ├── products.py           # Product listing and detail APIs
+│       ├── cart.py               # Cart CRUD APIs
+│       ├── checkout.py           # Payment processing API
+│       ├── address.py            # Address CRUD + geocoding
+│       └── chat.py               # AI chatbot API
+├── frontend/                     # React frontend (Vite)
+│   ├── src/
+│   │   ├── api.js                # API service layer with cookie auth
+│   │   ├── main.jsx              # React entry point
+│   │   ├── App.jsx               # Routes and layout
+│   │   ├── index.css             # Tailwind + custom animations
+│   │   ├── context/
+│   │   │   ├── AuthContext.jsx    # Auth state with /api/auth/me check
+│   │   │   ├── CartContext.jsx    # Global cart count
+│   │   │   └── ToastContext.jsx   # Toast notification system
+│   │   ├── components/
+│   │   │   ├── Navbar.jsx         # Sticky nav with search, cart badge, user dropdown
+│   │   │   ├── Footer.jsx         # Site footer with links
+│   │   │   ├── ProductCard.jsx    # Product card with quick-add
+│   │   │   ├── ChatWidget.jsx     # Floating ShopBot chatbot
+│   │   │   └── ProtectedRoute.jsx # Auth guard wrapper
+│   │   └── pages/
+│   │       ├── Home.jsx           # Hero banner, category grid, product cards
+│   │       ├── Login.jsx          # Email/phone + password login
+│   │       ├── Register.jsx       # Registration form
+│   │       ├── ProductDetail.jsx  # Full product view with qty selector
+│   │       ├── Cart.jsx           # Cart items, qty controls, order summary
+│   │       ├── Checkout.jsx       # Address display, card payment form
+│   │       ├── Address.jsx        # Address CRUD with geolocation
+│   │       ├── ForgotPassword.jsx # Request password reset token
+│   │       ├── ResetPassword.jsx  # Set new password with token
+│   │       └── Logout.jsx         # Clear auth + redirect
+│   ├── vite.config.js            # Vite + Tailwind + API proxy
+│   └── package.json
+├── start.py                      # Start both backend + frontend
+├── start_backend.py              # Start backend only (:8000)
+├── start_frontend.py             # Start frontend dev server (:5173)
+├── start_prod.py                 # Build + serve production
+├── run.py                        # Backend entry point
+├── requirements.txt              # Python dependencies
 └── README.md
 ```
 
@@ -66,126 +83,155 @@ e-commerce/
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- DeepSeek API key (for the AI chatbot)
+- **Python 3.10+** (works with 3.12)
+- **Node.js 18+** (for the React frontend)
+- **PostgreSQL** (running locally or reachable via `DATABASE_URL`)
+- pip and npm
 
 ### Installation
 
-1. **Navigate to the project directory:**
+1. **Clone the repository:**
 
 ```bash
 cd e-commerce
 ```
 
-2. **Create a virtual environment:**
+2. **Create and activate a virtual environment:**
 
 ```bash
-python -m venv .venv
+# Windows
+python -m venv venv
+venv\Scripts\activate
+
+# Linux/Mac
+python3 -m venv venv
+source venv/bin/activate
 ```
 
-3. **Activate the virtual environment:**
-
-- Windows:
-```bash
-.venv\Scripts\activate
-```
-- Linux/Mac:
-```bash
-source .venv/bin/activate
-```
-
-4. **Install dependencies:**
+3. **Install Python dependencies:**
 
 ```bash
 pip install -r requirements.txt
 ```
 
-5. **Set your API key** by editing the `.env` file:
-
-```
-DEEPSEEK_API_KEY=your-deepseek-api-key
-```
-
-6. **Run the application:**
+4. **Install frontend dependencies:**
 
 ```bash
-python run.py
+cd frontend
+npm install
+cd ..
 ```
 
-7. **Open your browser:**
+5. **Configure the database:**
 
+Create a database named `shophub` (or point `DATABASE_URL` at your own), then set it in your `.env` file (see [Environment Variables](#environment-variables)). Tables and seed data are created automatically on first run.
+
+### Running in Development
+
+**Option A - Start both servers at once:**
+
+```bash
+python start.py
 ```
-http://127.0.0.1:8000
+
+**Option B - Start servers separately (two terminals):**
+
+```bash
+# Terminal 1: Backend
+python start_backend.py        # http://127.0.0.1:8000
+
+# Terminal 2: Frontend
+python start_frontend.py       # http://localhost:5173
 ```
+
+Open **http://localhost:5173** in your browser. The Vite dev server proxies API calls to the backend automatically.
+
+### Running in Production
+
+```bash
+python start_prod.py
+```
+
+This builds the React app and serves everything on **http://127.0.0.1:8000**.
 
 ## Usage
 
-1. **Register** a new account — provide username, email, optional phone number, and password
-2. **Login** using your email or phone number
-3. **Browse products** — filter by category, search by name
-4. **Click a product** to view details, ratings, and add to cart
-5. **View your cart** via the cart icon in the navbar
-6. **Proceed to checkout** and enter dummy card details
-7. **Chat with ShopBot** — click the robot icon (bottom-right) to ask about products, orders, or store features
+1. **Register** a new account (username + email + password min 6 chars)
+2. **Login** with email/phone + password
+3. **Browse products** on the home page - filter by category or search
+4. **Click a product** to view details and select quantity
+5. **Add to cart** and view cart from the navbar
+6. **Add delivery address** (supports geolocation auto-fill)
+7. **Enter payment details** (any 16-digit card) and place order
+8. **Chat with ShopBot** via the floating chat button for product help
 
 ## API Endpoints
 
 ### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register` | Register user (username, email, phone?, password) |
-| POST | `/api/auth/login` | Login with email or phone + password |
-| POST | `/api/auth/forgot-password` | Request password reset token |
-| POST | `/api/auth/reset-password` | Reset password with token |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/auth/register` | No | Register a new user |
+| POST | `/api/auth/login` | No | Login, sets JWT cookie |
+| GET | `/api/auth/me` | Yes | Get current user info |
+| POST | `/api/auth/forgot-password` | No | Request reset token |
+| POST | `/api/auth/reset-password` | No | Set new password |
 
 ### Products
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/products` | List products (?category=&search=) |
-| GET | `/api/products/{id}` | Get product details |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/products` | No | List all (query: `?category=X&search=Y`) |
+| GET | `/api/products/{id}` | No | Get product details |
 
 ### Cart
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/cart` | Get user's cart |
-| POST | `/api/cart/add` | Add item to cart |
-| PUT | `/api/cart/update/{id}` | Update item quantity |
-| DELETE | `/api/cart/remove/{id}` | Remove item from cart |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/cart` | Yes | Get cart with items and total |
+| POST | `/api/cart/add` | Yes | Add item (`{product_id, quantity}`) |
+| PUT | `/api/cart/update/{id}` | Yes | Update quantity (`{quantity}`) |
+| DELETE | `/api/cart/remove/{id}` | Yes | Remove item |
 
 ### Checkout
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/checkout` | Process dummy payment |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/checkout` | Yes | Process payment (`{card_number, card_name, expiry, cvv}`) |
+
+### Address
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/address` | Yes | List all saved addresses |
+| GET | `/api/address/default` | Yes | Get default address |
+| POST | `/api/address` | Yes | Create new address |
+| PUT | `/api/address/{id}` | Yes | Update address |
+| DELETE | `/api/address/{id}` | Yes | Delete address |
+| POST | `/api/address/geocode` | No | Reverse geocode (`{lat, lng}`) |
 
 ### Chat
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/chat` | Send message to ShopBot AI |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/chat` | Yes | Send message, get AI response (`{message}`) |
 
 ## Database
 
-SQLite3 with auto-migration. Tables:
+PostgreSQL with 7 tables: `users`, `products`, `password_resets`, `cart_items`, `addresses`, `orders`, `order_items`. Tables and 486 seed products across 9 categories are created automatically on first run (see `app/database.py`).
 
-- **users** — id, username, email, phone, password_hash
-- **products** — 36 pre-seeded products across 9 categories
-- **cart_items** — user_id, product_id, quantity
-- **password_resets** — user_id, token, expires_at
+## Environment Variables
 
-## AI Chatbot Configuration
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | No (defaults to `postgresql://postgres:postgres@localhost:5432/shophub`) | PostgreSQL connection string |
+| `DEEPSEEK_API_KEY` | For chat | DeepSeek API key (also supports `OPENAI_API_KEY`) |
 
-The chatbot uses the OpenAI-compatible API. Defaults to DeepSeek:
+Create a `.env` file in the project root:
 
-| Env Variable | Default | Description |
-|---|---|---|
-| `DEEPSEEK_API_KEY` | — | Your API key |
-| `OPENAI_API_BASE` | `https://api.deepseek.com/v1` | API base URL |
-| `OPENAI_MODEL` | `deepseek-chat` | Model name |
-
-The assistant is restricted to ShopHub-related questions only — it will decline anything unrelated.
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/shophub
+DEEPSEEK_API_KEY=sk-your-key-here
+```
 
 ## Notes
 
-- This is a **demo project** — no real payment processing
-- Product images from Unsplash
-- JWT tokens stored in HTTP-only cookies
-- Password hashing uses PBKDF2 with SHA-256
+- This is a demo project - no real payment processing
+- Product images use `source.unsplash.com` with keyword-based search
+- JWT tokens stored in HTTP-only cookies (`/api/auth/me` validates auth state)
+- Password hashing uses PBKDF2-HMAC-SHA256 with 100,000 iterations
+- Chat requires a valid API key, falls back to static responses otherwise

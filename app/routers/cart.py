@@ -8,12 +8,14 @@ router = APIRouter()
 @router.get("")
 async def get_cart(request: Request):
     conn = get_connection()
-    items = conn.execute("""
+    cur = conn.cursor()
+    cur.execute("""
         SELECT c.id, c.quantity, p.id as product_id, p.name, p.price, p.image_url, p.rating
         FROM cart_items c
         JOIN products p ON c.product_id = p.id
-        WHERE c.user_id = ?
-    """, (request.state.user_id,)).fetchall()
+        WHERE c.user_id = %s
+    """, (request.state.user_id,))
+    items = cur.fetchall()
     conn.close()
 
     cart_items = [dict(item) for item in items]
@@ -25,34 +27,37 @@ async def get_cart(request: Request):
 @router.post("/add")
 async def add_to_cart(request: Request, item: CartItemAdd):
     conn = get_connection()
+    cur = conn.cursor()
 
-    product = conn.execute("SELECT * FROM products WHERE id = ?", (item.product_id,)).fetchone()
-    if not product:
+    cur.execute("SELECT * FROM products WHERE id = %s", (item.product_id,))
+    if not cur.fetchone():
         conn.close()
         raise HTTPException(status_code=404, detail="Product not found")
 
-    existing = conn.execute(
-        "SELECT * FROM cart_items WHERE user_id = ? AND product_id = ?",
+    cur.execute(
+        "SELECT * FROM cart_items WHERE user_id = %s AND product_id = %s",
         (request.state.user_id, item.product_id)
-    ).fetchone()
+    )
+    existing = cur.fetchone()
 
     if existing:
-        conn.execute(
-            "UPDATE cart_items SET quantity = quantity + ? WHERE id = ?",
+        cur.execute(
+            "UPDATE cart_items SET quantity = quantity + %s WHERE id = %s",
             (item.quantity, existing["id"])
         )
     else:
-        conn.execute(
-            "INSERT INTO cart_items (user_id, product_id, quantity) VALUES (?, ?, ?)",
+        cur.execute(
+            "INSERT INTO cart_items (user_id, product_id, quantity) VALUES (%s, %s, %s)",
             (request.state.user_id, item.product_id, item.quantity)
         )
 
     conn.commit()
 
-    count = conn.execute(
-        "SELECT COALESCE(SUM(quantity), 0) FROM cart_items WHERE user_id = ?",
+    cur.execute(
+        "SELECT COALESCE(SUM(quantity), 0) as count FROM cart_items WHERE user_id = %s",
         (request.state.user_id,)
-    ).fetchone()[0]
+    )
+    count = cur.fetchone()["count"]
 
     conn.close()
 
@@ -62,21 +67,23 @@ async def add_to_cart(request: Request, item: CartItemAdd):
 @router.put("/update/{item_id}")
 async def update_cart_item(request: Request, item_id: int, update: CartItemUpdate):
     conn = get_connection()
+    cur = conn.cursor()
 
-    item = conn.execute(
-        "SELECT * FROM cart_items WHERE id = ? AND user_id = ?",
+    cur.execute(
+        "SELECT * FROM cart_items WHERE id = %s AND user_id = %s",
         (item_id, request.state.user_id)
-    ).fetchone()
+    )
+    item = cur.fetchone()
 
     if not item:
         conn.close()
         raise HTTPException(status_code=404, detail="Cart item not found")
 
     if update.quantity <= 0:
-        conn.execute("DELETE FROM cart_items WHERE id = ?", (item_id,))
+        cur.execute("DELETE FROM cart_items WHERE id = %s", (item_id,))
     else:
-        conn.execute(
-            "UPDATE cart_items SET quantity = ? WHERE id = ?",
+        cur.execute(
+            "UPDATE cart_items SET quantity = %s WHERE id = %s",
             (update.quantity, item_id)
         )
 
@@ -89,17 +96,19 @@ async def update_cart_item(request: Request, item_id: int, update: CartItemUpdat
 @router.delete("/remove/{item_id}")
 async def remove_from_cart(request: Request, item_id: int):
     conn = get_connection()
+    cur = conn.cursor()
 
-    conn.execute(
-        "DELETE FROM cart_items WHERE id = ? AND user_id = ?",
+    cur.execute(
+        "DELETE FROM cart_items WHERE id = %s AND user_id = %s",
         (item_id, request.state.user_id)
     )
     conn.commit()
 
-    count = conn.execute(
-        "SELECT COALESCE(SUM(quantity), 0) FROM cart_items WHERE user_id = ?",
+    cur.execute(
+        "SELECT COALESCE(SUM(quantity), 0) as count FROM cart_items WHERE user_id = %s",
         (request.state.user_id,)
-    ).fetchone()[0]
+    )
+    count = cur.fetchone()["count"]
 
     conn.close()
 

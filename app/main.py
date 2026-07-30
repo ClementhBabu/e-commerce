@@ -3,18 +3,23 @@ load_dotenv()
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import RedirectResponse, JSONResponse
-from app.database import init_db, get_connection
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.middleware.cors import CORSMiddleware
+from app.database import init_db
 from app.dependencies import SECRET_KEY, ALGORITHM
 from app.routers import auth, products, cart, checkout, chat, address
 from jose import jwt, JWTError
+from pathlib import Path
 
 app = FastAPI(title="ShopHub - E-Commerce Store")
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-templates = Jinja2Templates(directory="app/templates")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(products.router, prefix="/api", tags=["products"])
@@ -32,174 +37,45 @@ async def startup():
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     public_paths = [
-        "/login", "/register", "/static",
-        "/forgot-password", "/reset-password",
         "/api/auth/login", "/api/auth/register",
         "/api/auth/forgot-password", "/api/auth/reset-password",
-        "/api/address/geocode"
+        "/api/products",
+        "/api/address/geocode",
     ]
 
-    is_public = any(request.url.path.startswith(p) for p in public_paths)
+    if not request.url.path.startswith("/api/"):
+        return await call_next(request)
 
+    is_public = any(request.url.path.startswith(p) for p in public_paths)
     if is_public:
         return await call_next(request)
 
     token = request.cookies.get("access_token")
-
     if not token:
-        if request.url.path.startswith("/api/"):
-            return JSONResponse(status_code=401, content={"detail": "Not authenticated"})
-        return RedirectResponse(url="/login", status_code=302)
+        return JSONResponse(status_code=401, content={"detail": "Not authenticated"})
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         request.state.user_id = payload.get("user_id")
         request.state.username = payload.get("username")
     except JWTError:
-        if request.url.path.startswith("/api/"):
-            return JSONResponse(status_code=401, content={"detail": "Not authenticated"})
-        response = RedirectResponse(url="/login", status_code=302)
-        response.delete_cookie("access_token")
-        return response
+        return JSONResponse(status_code=401, content={"detail": "Not authenticated"})
 
     return await call_next(request)
 
 
-@app.get("/")
-async def home(request: Request):
-    conn = get_connection()
-    products_list = conn.execute("SELECT * FROM products").fetchall()
-    categories = conn.execute("SELECT DISTINCT category FROM products").fetchall()
-    conn.close()
+FRONTEND_DIST = Path(__file__).parent.parent / "frontend" / "dist"
 
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "products": [dict(p) for p in products_list],
-        "categories": [c["category"] for c in categories],
-        "user": {"username": request.state.username}
-    })
+if FRONTEND_DIST.exists():
+    assets_dir = FRONTEND_DIST / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="react_assets")
 
-
-@app.get("/login")
-async def login_page(request: Request):
-    token = request.cookies.get("access_token")
-    if token:
-        try:
-            jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            return RedirectResponse(url="/", status_code=302)
-        except JWTError:
-            pass
-    return templates.TemplateResponse("login.html", {"request": request})
-
-
-@app.get("/register")
-async def register_page(request: Request):
-    token = request.cookies.get("access_token")
-    if token:
-        try:
-            jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            return RedirectResponse(url="/", status_code=302)
-        except JWTError:
-            pass
-    return templates.TemplateResponse("register.html", {"request": request})
-
-
-@app.get("/product/{product_id}")
-async def product_detail(request: Request, product_id: int):
-    conn = get_connection()
-    product = conn.execute("SELECT * FROM products WHERE id = ?", (product_id,)).fetchone()
-    conn.close()
-
-    if not product:
-        return templates.TemplateResponse("index.html", {
-            "request": request,
-            "products": [],
-            "categories": [],
-            "user": {"username": request.state.username}
-        }, status_code=404)
-
-    return templates.TemplateResponse("product_detail.html", {
-        "request": request,
-        "product": dict(product),
-        "user": {"username": request.state.username}
-    })
-
-
-@app.get("/cart")
-async def cart_page(request: Request):
-    conn = get_connection()
-    items = conn.execute("""
-        SELECT c.id, c.quantity, p.id as product_id, p.name, p.price, p.image_url, p.rating
-        FROM cart_items c
-        JOIN products p ON c.product_id = p.id
-        WHERE c.user_id = ?
-    """, (request.state.user_id,)).fetchall()
-    conn.close()
-
-    cart_items = [dict(item) for item in items]
-    total = round(sum(item["price"] * item["quantity"] for item in cart_items), 2)
-
-    return templates.TemplateResponse("cart.html", {
-        "request": request,
-        "cart_items": cart_items,
-        "total": total,
-        "user": {"username": request.state.username}
-    })
-
-
-@app.get("/checkout")
-async def checkout_page(request: Request):
-    conn = get_connection()
-    items = conn.execute("""
-        SELECT c.id, c.quantity, p.id as product_id, p.name, p.price, p.image_url
-        FROM cart_items c
-        JOIN products p ON c.product_id = p.id
-        WHERE c.user_id = ?
-    """, (request.state.user_id,)).fetchall()
-    conn.close()
-
-    cart_items = [dict(item) for item in items]
-    total = round(sum(item["price"] * item["quantity"] for item in cart_items), 2)
-
-    if not cart_items:
-        return RedirectResponse(url="/cart", status_code=302)
-
-    return templates.TemplateResponse("checkout.html", {
-        "request": request,
-        "cart_items": cart_items,
-        "total": total,
-        "user": {"username": request.state.username}
-    })
-
-
-@app.get("/address")
-async def address_page(request: Request):
-    conn = get_connection()
-    address = conn.execute(
-        "SELECT * FROM addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC LIMIT 1",
-        (request.state.user_id,)
-    ).fetchone()
-    conn.close()
-
-    return templates.TemplateResponse("address.html", {
-        "request": request,
-        "user": {"username": request.state.username},
-        "address": dict(address) if address else None
-    })
-
-
-@app.get("/forgot-password")
-async def forgot_password_page(request: Request):
-    return templates.TemplateResponse("forgot_password.html", {"request": request})
-
-
-@app.get("/reset-password")
-async def reset_password_page(request: Request):
-    return templates.TemplateResponse("reset_password.html", {"request": request})
-
-
-@app.get("/logout")
-async def logout():
-    response = RedirectResponse(url="/login", status_code=302)
-    response.delete_cookie("access_token")
-    return response
+    @app.get("/{full_path:path}")
+    async def serve_react_spa(request: Request, full_path: str):
+        if full_path.startswith("api/") or full_path.startswith("assets/"):
+            return JSONResponse(status_code=404, content={"detail": "Not found"})
+        index_file = FRONTEND_DIST / "index.html"
+        if index_file.exists():
+            return FileResponse(str(index_file))
+        return JSONResponse(status_code=404, content={"detail": "Not found"})

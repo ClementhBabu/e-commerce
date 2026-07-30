@@ -8,13 +8,15 @@ router = APIRouter()
 @router.post("")
 async def process_checkout(request: Request):
     conn = get_connection()
+    cur = conn.cursor()
 
-    items = conn.execute("""
+    cur.execute("""
         SELECT c.id, c.quantity, p.id as product_id, p.name, p.price
         FROM cart_items c
         JOIN products p ON c.product_id = p.id
-        WHERE c.user_id = ?
-    """, (request.state.user_id,)).fetchall()
+        WHERE c.user_id = %s
+    """, (request.state.user_id,))
+    items = cur.fetchall()
 
     if not items:
         conn.close()
@@ -25,25 +27,26 @@ async def process_checkout(request: Request):
     payment_success = random.random() < 0.9
 
     if payment_success:
-        address = conn.execute(
-            "SELECT id FROM addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC LIMIT 1",
+        cur.execute(
+            "SELECT id FROM addresses WHERE user_id = %s ORDER BY is_default DESC, created_at DESC LIMIT 1",
             (request.state.user_id,)
-        ).fetchone()
+        )
+        address = cur.fetchone()
         address_id = address["id"] if address else None
 
-        cursor = conn.execute(
-            "INSERT INTO orders (user_id, address_id, total) VALUES (?, ?, ?)",
+        cur.execute(
+            "INSERT INTO orders (user_id, address_id, total) VALUES (%s, %s, %s) RETURNING id",
             (request.state.user_id, address_id, total)
         )
-        order_id = cursor.lastrowid
+        order_id = cur.fetchone()["id"]
 
         for item in items:
-            conn.execute(
-                "INSERT INTO order_items (order_id, product_id, product_name, price, quantity) VALUES (?, ?, ?, ?, ?)",
+            cur.execute(
+                "INSERT INTO order_items (order_id, product_id, product_name, price, quantity) VALUES (%s, %s, %s, %s, %s)",
                 (order_id, item["product_id"], item["name"], item["price"], item["quantity"])
             )
 
-        conn.execute("DELETE FROM cart_items WHERE user_id = ?", (request.state.user_id,))
+        cur.execute("DELETE FROM cart_items WHERE user_id = %s", (request.state.user_id,))
         conn.commit()
         conn.close()
         return {
