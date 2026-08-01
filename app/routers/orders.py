@@ -66,7 +66,7 @@ async def get_order(request: Request, order_id: int):
     )
     items = cur.fetchall()
 
-    cur.execute("SELECT * FROM returns WHERE order_id = %s", (order_id,))
+    cur.execute("SELECT * FROM product_returns WHERE order_id = %s", (order_id,))
     ret = cur.fetchone()
     conn.close()
 
@@ -93,13 +93,13 @@ async def request_return(request: Request, order_id: int, body: ReturnRequest):
         conn.close()
         raise HTTPException(status_code=404, detail="Order not found")
 
-    cur.execute("SELECT id FROM returns WHERE order_id = %s", (order_id,))
+    cur.execute("SELECT id FROM product_returns WHERE order_id = %s", (order_id,))
     if cur.fetchone():
         conn.close()
         raise HTTPException(status_code=400, detail="A return has already been requested for this order")
 
     cur.execute(
-        "INSERT INTO returns (order_id, user_id, reason) VALUES (%s, %s, %s)",
+        "INSERT INTO product_returns (order_id, user_id, reason) VALUES (%s, %s, %s)",
         (order_id, request.state.user_id, body.reason)
     )
     conn.commit()
@@ -115,7 +115,7 @@ async def list_returns(request: Request):
     cur.execute(
         """
         SELECT r.id, r.order_id, r.reason, r.status, r.created_at, o.total
-        FROM returns r
+        FROM product_returns r
         JOIN orders o ON o.id = r.order_id
         WHERE r.user_id = %s
         ORDER BY r.created_at DESC

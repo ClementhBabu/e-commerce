@@ -137,7 +137,7 @@ def init_db():
     """)
 
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS returns (
+        CREATE TABLE IF NOT EXISTS product_returns (
             id SERIAL PRIMARY KEY,
             order_id INTEGER NOT NULL REFERENCES orders(id),
             user_id INTEGER NOT NULL REFERENCES users(id),
@@ -178,7 +178,7 @@ def init_db():
              49.99, "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop", "Accessories", 4.6),
             ("Wireless Charging Pad",
              "Fast wireless charger compatible with all Qi-enabled devices. Slim design with LED indicator and foreign object detection.",
-             29.99, "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=600&h=600&fit=crop", "Electronics", 4.1),
+             29.99, "https://muvit.in/cdn/shop/files/wireless_charger_in_apple.webp?v=1776151743", "Electronics", 4.1),
             ("Stainless Steel Water Bottle",
              "Double-wall vacuum insulated water bottle. Keeps drinks cold for 24 hours or hot for 12 hours. BPA-free and eco-friendly.",
              19.99, "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&h=600&fit=crop", "Home & Kitchen", 4.4),
