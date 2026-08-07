@@ -6,3 +6,7 @@ ecommerce.db
 *.db
 .venv/
 venv/
+
+# Database backups / exports
+shophub_backup.sql
+products_prices.csv
